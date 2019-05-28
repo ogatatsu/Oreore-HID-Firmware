@@ -6,3 +6,5 @@
 
 // ペアリングする時にセントラル側の設定画面に現れる見た目
 #define BLE_APPEARANCE BLE_APPEARANCE_HID_MOUSE
+
+#define PMW3360_Config1 0x07 // 800cpi
