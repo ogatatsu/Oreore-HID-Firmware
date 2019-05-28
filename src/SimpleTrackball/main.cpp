@@ -24,6 +24,7 @@
 
 #include "BatteryUtil.h"
 #include "BleController.h"
+#include "HidEngine.h"
 #include "PMW3360.h"
 
 #define PMW3360_NCS_PIN 25
@@ -39,10 +40,10 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-void motion_callback(int8_t deltaX, int8_t deltaY, uint8_t id)
+void motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  BleController::getHidReporter()->mouseReport(0, -deltaX, deltaY, 0, 0);
+  HidEngine::mouseMove(-deltaX, deltaY);
 }
 
 void setup()
@@ -57,6 +58,9 @@ void setup()
 
   pmw3360.setMotionCallback(motion_callback);
   pmw3360.startTask();
+
+  HidEngine::init(BleController::getHidReporter());
+  HidEngine::startTask();
 }
 
 void loop()

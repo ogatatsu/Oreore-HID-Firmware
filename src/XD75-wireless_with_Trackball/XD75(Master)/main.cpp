@@ -42,7 +42,7 @@ void keyscan_callback(const Set &ids)
   HidEngine::applyToKeymap(ids);
 }
 
-void slave_motion_callback(int8_t deltaX, int8_t deltaY, uint8_t id, uint8_t index)
+void slave_motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id, uint8_t index)
 {
   HidEngine::mouseMove(deltaX, deltaY);
 }

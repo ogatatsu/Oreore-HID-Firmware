@@ -37,7 +37,7 @@ void keyscan_callback(const Set &ids)
   HidEngine::applyToKeymap(ids);
 }
 
-void motion_callback(int8_t deltaX, int8_t deltaY, uint8_t id)
+void motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
   HidEngine::mouseMove(-deltaX, deltaY);

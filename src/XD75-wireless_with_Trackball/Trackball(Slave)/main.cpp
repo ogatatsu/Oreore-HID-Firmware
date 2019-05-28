@@ -39,7 +39,7 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-void motion_callback(int8_t deltaX, int8_t deltaY, uint8_t id)
+void motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
   BleControllerSlave::sendToMaster(-deltaX, deltaY, id);
