@@ -8,7 +8,7 @@ constexpr uint8_t OUT1 = 11; // ROW1
 constexpr uint8_t OUT2 = 12; // ROW2
 constexpr uint8_t OUT3 = 14; // ROW3
 constexpr uint8_t OUT4 = 16; // ROW4
-constexpr uint8_t outPins[] = {OUT0, OUT1, OUT2, OUT3, OUT4};
+constexpr uint8_t outPins[] = { OUT0, OUT1, OUT2, OUT3, OUT4 };
 
 constexpr uint8_t IN0 = 13; // COL0
 constexpr uint8_t IN1 = 15; // COL1
@@ -17,7 +17,7 @@ constexpr uint8_t IN3 = 30; // COL3
 constexpr uint8_t IN4 = 29; // COL4
 constexpr uint8_t IN5 = 28; // COL5
 constexpr uint8_t IN6 = 27; // COL6
-constexpr uint8_t inPins[] = {IN0, IN1, IN2, IN3, IN4, IN5, IN6};
+constexpr uint8_t inPins[] = { IN0, IN1, IN2, IN3, IN4, IN5, IN6 };
 
 constexpr uint8_t outLength = sizeof(outPins) / sizeof(outPins[0]);
 constexpr uint8_t inLength = sizeof(inPins) / sizeof(inPins[0]);
@@ -64,9 +64,9 @@ Switch sw25(43);
 Switch sw32(57);
 
 Switch *matrix[outLength][inLength] = {
-    {&sw1, &sw2, &sw3, &sw4, &sw5, &sw6, nullptr},
-    {&sw7, &sw8, &sw9, &sw10, &sw11, &sw12, nullptr},
-    {&sw13, &sw14, &sw15, &sw16, &sw17, &sw18, nullptr},
-    {&sw19, &sw20, &sw21, &sw22, &sw23, &sw24, &sw25},
-    {&sw26, &sw27, &sw28, &sw29, &sw30, &sw31, &sw32},
+  { &sw1, &sw2, &sw3, &sw4, &sw5, &sw6, nullptr },
+  { &sw7, &sw8, &sw9, &sw10, &sw11, &sw12, nullptr },
+  { &sw13, &sw14, &sw15, &sw16, &sw17, &sw18, nullptr },
+  { &sw19, &sw20, &sw21, &sw22, &sw23, &sw24, &sw25 },
+  { &sw26, &sw27, &sw28, &sw29, &sw30, &sw31, &sw32 },
 };

@@ -18,14 +18,14 @@ constexpr uint8_t OUT11 = 27; // COL11
 constexpr uint8_t OUT12 = 30; // COL12
 constexpr uint8_t OUT13 = 29; // COL13
 constexpr uint8_t OUT14 = 28; // COL14
-constexpr uint8_t outPins[] = {OUT0, OUT1, OUT2, OUT3, OUT4, OUT5, OUT6, OUT7, OUT8, OUT9, OUT10, OUT11, OUT12, OUT13, OUT14};
+constexpr uint8_t outPins[] = { OUT0, OUT1, OUT2, OUT3, OUT4, OUT5, OUT6, OUT7, OUT8, OUT9, OUT10, OUT11, OUT12, OUT13, OUT14 };
 
 constexpr uint8_t IN0 = 16; // ROW0
 constexpr uint8_t IN1 = 31; // ROW1
 constexpr uint8_t IN2 = 13; // ROW2
 constexpr uint8_t IN3 = 15; // ROW3
 constexpr uint8_t IN4 = 5;  // ROW4
-constexpr uint8_t inPins[] = {IN0, IN1, IN2, IN3, IN4};
+constexpr uint8_t inPins[] = { IN0, IN1, IN2, IN3, IN4 };
 
 constexpr uint8_t outLength = sizeof(outPins) / sizeof(outPins[0]);
 constexpr uint8_t inLength = sizeof(inPins) / sizeof(inPins[0]);
@@ -113,19 +113,19 @@ Switch sw70(70);
 Switch sw75(75);
 
 Switch *matrix[outLength][inLength] = {
-    {&sw1, &sw2, &sw3, &sw4, &sw5},
-    {&sw6, &sw7, &sw8, &sw9, &sw10},
-    {&sw11, &sw12, &sw13, &sw14, &sw15},
-    {&sw16, &sw17, &sw18, &sw19, &sw20},
-    {&sw21, &sw22, &sw23, &sw24, &sw25},
-    {&sw26, &sw27, &sw28, &sw29, &sw30},
-    {&sw31, &sw32, &sw33, &sw34, &sw35},
-    {&sw36, &sw37, &sw38, &sw39, &sw40},
-    {&sw41, &sw42, &sw43, &sw44, &sw45},
-    {&sw46, &sw47, &sw48, &sw49, &sw50},
-    {&sw51, &sw52, &sw53, &sw54, &sw55},
-    {&sw56, &sw57, &sw58, &sw59, &sw60},
-    {&sw61, &sw62, &sw63, &sw64, &sw65},
-    {&sw66, &sw67, &sw68, &sw69, &sw70},
-    {&sw71, &sw72, &sw73, &sw74, &sw75},
+  { &sw1, &sw2, &sw3, &sw4, &sw5 },
+  { &sw6, &sw7, &sw8, &sw9, &sw10 },
+  { &sw11, &sw12, &sw13, &sw14, &sw15 },
+  { &sw16, &sw17, &sw18, &sw19, &sw20 },
+  { &sw21, &sw22, &sw23, &sw24, &sw25 },
+  { &sw26, &sw27, &sw28, &sw29, &sw30 },
+  { &sw31, &sw32, &sw33, &sw34, &sw35 },
+  { &sw36, &sw37, &sw38, &sw39, &sw40 },
+  { &sw41, &sw42, &sw43, &sw44, &sw45 },
+  { &sw46, &sw47, &sw48, &sw49, &sw50 },
+  { &sw51, &sw52, &sw53, &sw54, &sw55 },
+  { &sw56, &sw57, &sw58, &sw59, &sw60 },
+  { &sw61, &sw62, &sw63, &sw64, &sw65 },
+  { &sw66, &sw67, &sw68, &sw69, &sw70 },
+  { &sw71, &sw72, &sw73, &sw74, &sw75 },
 };

@@ -17,34 +17,34 @@
 using namespace hidpg;
 
 ID_and_Command keymap[] = {
-    {1, MS_MOV(10, 10)},
-    {2, NK(_B)},
-    {3, NK(_C)},
-    {4, NK(_D)},
-    {5, NK(_E)},
-    {6, NK(_F)},
-    {7, NK(_G)},
-    {8, NK(_H)},
-    {9, NK(_J)},
-    {10, NK(_K)},
-    {11, NK(_L)},
-    {12, NK(_M)},
-    {13, NK(_N)},
-    {14, NK(_O)},
-    {15, NK(_P)},
-    {16, NK(_Q)},
-    {17, NK(_R)},
-    {18, NK(_S)},
-    {19, NK(_T)},
-    {20, SEQ_MODE},
+  { 1, MS_MOV(10, 10) },
+  { 2, NK(_B) },
+  { 3, NK(_C) },
+  { 4, NK(_D) },
+  { 5, NK(_E) },
+  { 6, NK(_F) },
+  { 7, NK(_G) },
+  { 8, NK(_H) },
+  { 9, NK(_J) },
+  { 10, NK(_K) },
+  { 11, NK(_L) },
+  { 12, NK(_M) },
+  { 13, NK(_N) },
+  { 14, NK(_O) },
+  { 15, NK(_P) },
+  { 16, NK(_Q) },
+  { 17, NK(_R) },
+  { 18, NK(_S) },
+  { 19, NK(_T) },
+  { 20, SEQ_MODE },
 };
 
 SimulIDs_and_Command simulKeymap[] = {
-    {{3, 4, 5}, ToH(NOP, 2000, RESET)},
+  { { 3, 4, 5 }, ToH(NOP, 2000, RESET) },
 };
 
 SeqIDs_and_Command seqKeymap[] = {
-    {{5, 4}, BT(1)},
-    {{5, 3}, BT(2)},
-    {{5, 2}, BT(3)},
+  { { 5, 4 }, BT(1) },
+  { { 5, 3 }, BT(2) },
+  { { 5, 2 }, BT(3) },
 };
