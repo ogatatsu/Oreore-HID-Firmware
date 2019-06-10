@@ -9,7 +9,7 @@ patch_file = "framework-arduinoadafruitnrf52.patch"
 
 if not isfile(patchflag_file):
 
-    env.Execute("%s patch.py -d %s %s" % (sys.executable, framework_dir, patch_file))
+    env.Execute('"%s" patch.py -d "%s" "%s"' % (sys.executable, framework_dir, patch_file))
 
     def _touch(path):
         with open(path, "w") as fp:
