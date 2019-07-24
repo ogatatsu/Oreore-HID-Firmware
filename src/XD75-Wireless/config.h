@@ -12,3 +12,7 @@
 
 // スイッチがHIGHとLOWどちらでONになるか
 #define ACTIVE_STATE HIGH
+
+// 割り込みにSense signalを使用するか
+// nRF52でなおかつcustom version frameworkでのみ使用可能
+#define USE_SENSE_INTERRUPT true

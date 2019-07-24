@@ -15,3 +15,7 @@
 // スレーブがある場合のみ使用される
 // スキャン時に点滅させるLEDのピン番号
 #define SCAN_LED_PIN PIN_LED1
+
+// 割り込みにSense signalを使用するか
+// nRF52でなおかつcustom version frameworkでのみ使用可能
+#define USE_SENSE_INTERRUPT true

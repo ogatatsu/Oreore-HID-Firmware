@@ -13,6 +13,10 @@
 // スイッチがHIGHとLOWどちらでONになるか
 #define ACTIVE_STATE HIGH
 
+// 割り込みにSense signalを使用するか
+// nRF52でなおかつcustom version frameworkでのみ使用可能
+#define USE_SENSE_INTERRUPT true
+
 // スレーブ側のアドレスのリスト、このリストでフィルタして他の機器と接続しないようにする
 #define SLAVE_ADDR_LIST {                 \
     {0x36, 0x9E, 0x59, 0xB6, 0xF4, 0xE0}, \
