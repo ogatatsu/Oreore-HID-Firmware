@@ -56,6 +56,7 @@ void setup()
   BleControllerSlave::startPrphConnection();
 
   pmw3360.setMotionCallback(motion_callback);
+  pmw3360.init();
   pmw3360.startTask();
 }
 

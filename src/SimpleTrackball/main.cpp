@@ -57,9 +57,11 @@ void setup()
   BleController::startPrphConnection();
 
   pmw3360.setMotionCallback(motion_callback);
+  pmw3360.init();
   pmw3360.startTask();
 
-  HidEngine::init(BleController::getHidReporter());
+  HidEngine::setHidReporter(BleController::getHidReporter());
+  HidEngine::init();
   HidEngine::startTask();
 }
 

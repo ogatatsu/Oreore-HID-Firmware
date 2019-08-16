@@ -65,7 +65,8 @@ void setup()
 
   HidEngine::setKeymap(keymap);
   HidEngine::setTrackmap(trackmap);
-  HidEngine::init(BleController::getHidReporter());
+  HidEngine::setHidReporter(BleController::getHidReporter());
+  HidEngine::init();
   HidEngine::startTask();
 }
 

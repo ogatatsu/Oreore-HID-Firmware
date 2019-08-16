@@ -55,7 +55,8 @@ void setup()
   MatrixScan::startTask();
 
   HidEngine::setKeymap(keymap);
-  HidEngine::init(BleController::getHidReporter());
+  HidEngine::setHidReporter(BleController::getHidReporter());
+  HidEngine::init();
   HidEngine::startTask();
 }
 

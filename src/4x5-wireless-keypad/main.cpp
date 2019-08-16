@@ -57,7 +57,8 @@ void setup()
   HidEngine::setKeymap(keymap);
   HidEngine::setSimulKeymap(simulKeymap);
   HidEngine::setSeqKeymap(seqKeymap);
-  HidEngine::init(BleController::getHidReporter());
+  HidEngine::setHidReporter(BleController::getHidReporter());
+  HidEngine::init();
   HidEngine::startTask();
 }
 

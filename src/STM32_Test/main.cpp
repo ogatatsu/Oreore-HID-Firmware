@@ -50,6 +50,7 @@ void setup()
   MatrixScan::startTask();
 
   pmw3360.setMotionCallback(motion_callback);
+  pmw3360.init();
   pmw3360.startTask();
 
   STM32Hid::init();
@@ -57,7 +58,8 @@ void setup()
   HidEngine::setKeymap(keymap);
   //HidEngine::setSimulKeymap(simulKeymap);
   //HidEngine::setSeqKeymap(seqKeymap);
-  HidEngine::init(STM32Hid::getHidReporter());
+  HidEngine::setHidReporter(STM32Hid::getHidReporter());
+  HidEngine::init();
   HidEngine::startTask();
 
   vTaskStartScheduler();
