@@ -39,7 +39,13 @@ void prph_cannot_connect_callback()
 
 void keyscan_callback(const Set &ids)
 {
-  BleControllerSlave::sendToMaster(ids);
+  // 配列にして送る
+  uint16_t size = ids.count();
+  uint8_t buf[size + 1];
+  // Setが空でも空という情報は送りたいので１バイト目は適当になにか入れておいて、キーの押し情報は２バイト目以降に詰める
+  buf[0] = 0;
+  ids.toArray(buf + 1);
+  BleControllerSlave::sendData(buf, sizeof(buf));
 }
 
 void setup()

@@ -39,10 +39,18 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-void motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id)
+void motion_callback(int16_t deltaX, int16_t deltaY)
 {
+  struct
+  {
+    int16_t deltaX;
+    int16_t deltaY;
+  } buf;
+
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  BleControllerSlave::sendToMaster(-deltaX, deltaY, id);
+  buf.deltaX = -deltaX;
+  buf.deltaY = deltaY;
+  BleControllerSlave::sendData(reinterpret_cast<uint8_t *>(&buf), sizeof(buf));
 }
 
 void setup()

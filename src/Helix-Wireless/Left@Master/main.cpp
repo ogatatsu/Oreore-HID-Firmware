@@ -32,6 +32,7 @@
 using namespace hidpg;
 
 Set scanIDs, slaveIDs;
+// callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
 SemaphoreHandle_t mutex;
 
 void prph_cannot_connect_callback()
@@ -41,11 +42,21 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-// callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
-void slave_key_callback(Set &ids, uint8_t index)
+void receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
-  slaveIDs = ids;
+  slaveIDs.clear();
+  // 1バイト目は飛ばす
+  slaveIDs.addAll(data + 1, len - 1);
+  HidEngine::applyToKeymap(scanIDs | slaveIDs);
+  xSemaphoreGive(mutex);
+}
+
+void cent_disconnect_callback(uint8_t index, uint8_t reason)
+{
+  // 切断されたらキーが押しっぱなしにならないように空のデータを送る
+  xSemaphoreTake(mutex, portMAX_DELAY);
+  slaveIDs.clear();
   HidEngine::applyToKeymap(scanIDs | slaveIDs);
   xSemaphoreGive(mutex);
 }
@@ -66,7 +77,8 @@ void setup()
   mutex = xSemaphoreCreateMutex();
 
   BleController::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController::setSlaveKeyCallback(slave_key_callback);
+  BleController::setReceiveDataCallback(receive_data_callback);
+  BleController::setCentDisconnectCallback(cent_disconnect_callback);
   BleController::init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController::startPrphConnection();

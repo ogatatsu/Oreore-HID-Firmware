@@ -42,9 +42,16 @@ void keyscan_callback(const Set &ids)
   HidEngine::applyToKeymap(ids);
 }
 
-void slave_motion_callback(int16_t deltaX, int16_t deltaY, uint8_t id, uint8_t index)
+void receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 {
-  HidEngine::mouseMove(deltaX, deltaY);
+  struct Buf
+  {
+    int16_t deltaX;
+    int16_t deltaY;
+  };
+
+  Buf *buf = reinterpret_cast<Buf *>(data);
+  HidEngine::mouseMove(buf->deltaX, buf->deltaY);
 }
 
 void setup()
@@ -53,7 +60,7 @@ void setup()
   // Serial.begin(115200);
 
   BleController::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController::setSlaveMotionCallback(slave_motion_callback);
+  BleController::setReceiveDataCallback(receive_data_callback);
   BleController::init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController::startPrphConnection();
