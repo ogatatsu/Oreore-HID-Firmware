@@ -17,7 +17,7 @@ using namespace hidpg;
    * `--------------------------------------------------------------------------------------------------------.
    */
 
-ID_and_Command keymap[] = {
+Key keymap[] = {
   { 1, LY({ NK(_Escape), _______, ToH(NK(_Escape), 2000, RESET) }) },
   { 2, LY({ NK(_Tab), _______, CK(_Gui, _Tab) }) },
   { 3, TD({ { MO(_Ctrl), MO(_Ctrl) },

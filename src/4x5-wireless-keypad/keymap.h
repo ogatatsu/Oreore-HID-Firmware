@@ -16,7 +16,7 @@
 
 using namespace hidpg;
 
-ID_and_Command keymap[] = {
+Key keymap[] = {
   { 1, MS_MOV(10, 10) },
   { 2, NK(_B) },
   { 3, NK(_C) },
@@ -39,11 +39,11 @@ ID_and_Command keymap[] = {
   { 20, SEQ_MODE },
 };
 
-SimulIDs_and_Command simulKeymap[] = {
+SimulKey simulKeymap[] = {
   { { 3, 4, 5 }, ToH(NOP, 2000, RESET) },
 };
 
-SeqIDs_and_Command seqKeymap[] = {
+SeqKey seqKeymap[] = {
   { { 5, 4 }, BT(1) },
   { { 5, 3 }, BT(2) },
   { { 5, 2 }, BT(3) },

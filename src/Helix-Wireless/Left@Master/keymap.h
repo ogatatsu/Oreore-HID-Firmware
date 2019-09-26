@@ -62,7 +62,7 @@ using namespace hidpg;
 constexpr int LOWER = 1;
 constexpr int RAISE = 2;
 
-ID_and_Command keymap[] = {
+Key keymap[] = {
   { 1, LY({ NK(_Grave), CK(_Shift, _Grave), NK(_Grave) }) },
   { 2, LY({ NK(_1), ToH(CK(_Shift, _1), 1500, BT(1)), NK(_1) }) },
   { 3, LY({ NK(_2), ToH(CK(_Shift, _2), 1500, BT(2)), NK(_2) }) },
@@ -133,6 +133,6 @@ ID_and_Command keymap[] = {
   { 64, LY({ NK(_ArrowRight), CC(_PlayPause), CC(_PlayPause) }) },
 };
 
-SimulIDs_and_Command simulKeymap[] = {
+SimulKey simulKeymap[] = {
   { { 51, 56, 59 }, ToH(NOP, 2000, RESET) },
 };

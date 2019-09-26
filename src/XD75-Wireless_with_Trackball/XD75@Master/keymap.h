@@ -17,7 +17,7 @@ using namespace hidpg;
    * `--------------------------------------------------------------------------------------------------------.
    */
 
-ID_and_Command keymap[] = {
+Key keymap[] = {
   { 1, LY({ NK(_Escape), _______, ToH(NK(_Escape), 2000, RESET) }) },
   { 2, LY({ NK(_Tab), _______, CK(_Gui, _Tab) }) },
   { 3, TD({ { MO(_Ctrl), MO(_Ctrl) },
@@ -117,6 +117,6 @@ ID_and_Command keymap[] = {
   { 75, NK(_ArrowRight) },
 };
 
-TrackID_and_Command trackmap[] = {
+Track trackmap[] = {
   { 1, 50, MS_SCR(1, 0), MS_SCR(-1, 0) },
 };

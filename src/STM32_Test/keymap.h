@@ -2,7 +2,7 @@
 
 using namespace hidpg;
 
-static ID_and_Command keymap[] = {
+static Key keymap[] = {
   { 1, NK(_A) },
   { 2, NK(_B) },
   { 3, NK(_C) },
