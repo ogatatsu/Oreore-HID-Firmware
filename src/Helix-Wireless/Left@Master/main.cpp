@@ -37,6 +37,12 @@ SemaphoreHandle_t mutex;
 
 void prph_cannot_connect_callback()
 {
+  // スレーブにsystemOffにすることを通知する
+  // なんでもよいけどとりあえず0を送っておく
+  uint8_t data = 0;
+  BleController::sendData(0, &data, 1);
+  delay(1000);
+
   BleController::stopCentConnection();
   MatrixScan::stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();

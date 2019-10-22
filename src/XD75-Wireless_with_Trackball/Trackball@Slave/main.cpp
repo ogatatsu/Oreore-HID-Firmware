@@ -39,6 +39,16 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
+void receive_data_callback(uint8_t *data, uint16_t len)
+{
+  // マスターがsystemOffになったらスレーブもsystemOffにする
+  if (len == 1 && data[0] == 0)
+  {
+    pmw3360.stopTask_and_setWakeUpInterrupt();
+    sd_power_system_off();
+  }
+}
+
 void motion_callback(int16_t deltaX, int16_t deltaY)
 {
   struct
@@ -59,6 +69,7 @@ void setup()
   // Serial.begin(115200);
 
   BleControllerSlave::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
+  BleControllerSlave::setReceiveDataCallback(receive_data_callback);
   BleControllerSlave::init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleControllerSlave::startPrphConnection();

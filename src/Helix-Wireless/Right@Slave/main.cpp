@@ -37,6 +37,16 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
+void receive_data_callback(uint8_t *data, uint16_t len)
+{
+  // マスターがsystemOffになったらスレーブもsystemOffにする
+  if (len == 1 && data[0] == 0)
+  {
+    MatrixScan::stopTask_and_setWakeUpInterrupt();
+    sd_power_system_off();
+  }
+}
+
 void keyscan_callback(const Set &ids)
 {
   // 配列にして送る
@@ -54,6 +64,7 @@ void setup()
   // Serial.begin(115200);
 
   BleControllerSlave::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
+  BleControllerSlave::setReceiveDataCallback(receive_data_callback);
   BleControllerSlave::init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleControllerSlave::startPrphConnection();
