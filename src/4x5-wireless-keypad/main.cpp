@@ -51,7 +51,8 @@ void setup()
   BleController::startPrphConnection();
 
   MatrixScan::setKeyscanCallback(keyscan_callback);
-  MatrixScan::init(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::init();
   MatrixScan::startTask();
 
   HidEngine::setKeymap(keymap);

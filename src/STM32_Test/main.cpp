@@ -46,7 +46,8 @@ void motion_callback(int16_t deltaX, int16_t deltaY)
 void setup()
 {
   MatrixScan::setKeyscanCallback(keyscan_callback);
-  MatrixScan::init(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::init();
   MatrixScan::startTask();
 
   pmw3360.setMotionCallback(motion_callback);
