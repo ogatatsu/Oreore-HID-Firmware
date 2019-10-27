@@ -47,7 +47,7 @@ void receive_data_callback(uint8_t *data, uint16_t len)
   }
 }
 
-void keyscan_callback(const Set &ids)
+void matrix_scan_callback(const Set &ids)
 {
   // 配列にして送る
   uint16_t size = ids.count();
@@ -69,7 +69,7 @@ void setup()
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleControllerSlave::startPrphConnection();
 
-  MatrixScan::setKeyscanCallback(keyscan_callback);
+  MatrixScan::setCallback(matrix_scan_callback);
   MatrixScan::setMatrix(matrix, outPins, inPins);
   MatrixScan::init();
   MatrixScan::startTask();

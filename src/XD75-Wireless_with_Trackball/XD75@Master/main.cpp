@@ -43,7 +43,7 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-void keyscan_callback(const Set &ids)
+void matrix_scan_callback(const Set &ids)
 {
   HidEngine::applyToKeymap(ids);
 }
@@ -72,7 +72,7 @@ void setup()
   BleController::startPrphConnection();
   BleController::startCentConnection();
 
-  MatrixScan::setKeyscanCallback(keyscan_callback);
+  MatrixScan::setCallback(matrix_scan_callback);
   MatrixScan::setMatrix(matrix, outPins, inPins);
   MatrixScan::init();
   MatrixScan::startTask();

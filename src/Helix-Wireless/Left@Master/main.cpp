@@ -67,7 +67,7 @@ void cent_disconnect_callback(uint8_t index, uint8_t reason)
   xSemaphoreGive(mutex);
 }
 
-void keyscan_callback(const Set &ids)
+void matrix_scan_callback(const Set &ids)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
   scanIDs = ids;
@@ -90,7 +90,7 @@ void setup()
   BleController::startPrphConnection();
   BleController::startCentConnection();
 
-  MatrixScan::setKeyscanCallback(keyscan_callback);
+  MatrixScan::setCallback(matrix_scan_callback);
   MatrixScan::setMatrix(matrix, outPins, inPins);
   MatrixScan::init();
   MatrixScan::startTask();

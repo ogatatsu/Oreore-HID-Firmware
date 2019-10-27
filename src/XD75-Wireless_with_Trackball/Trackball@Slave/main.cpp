@@ -74,7 +74,7 @@ void setup()
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleControllerSlave::startPrphConnection();
 
-  pmw3360.setMotionCallback(motion_callback);
+  pmw3360.setCallback(motion_callback);
   pmw3360.init();
   pmw3360.startTask();
 }

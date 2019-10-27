@@ -32,7 +32,7 @@
 
 PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INTERRUPT_PIN);
 
-void keyscan_callback(const Set &ids)
+void matrix_scan_callback(const Set &ids)
 {
   HidEngine::applyToKeymap(ids);
 }
@@ -45,12 +45,12 @@ void motion_callback(int16_t deltaX, int16_t deltaY)
 
 void setup()
 {
-  MatrixScan::setKeyscanCallback(keyscan_callback);
+  MatrixScan::setCallback(matrix_scan_callback);
   MatrixScan::setMatrix(matrix, outPins, inPins);
   MatrixScan::init();
   MatrixScan::startTask();
 
-  pmw3360.setMotionCallback(motion_callback);
+  pmw3360.setCallback(motion_callback);
   pmw3360.init();
   pmw3360.startTask();
 
