@@ -29,8 +29,6 @@
 
 using namespace hidpg;
 
-QueueHandle_t eventQueue;
-
 void prph_cannot_connect_callback()
 {
   MatrixScan::stopTask_and_setWakeUpInterrupt();
@@ -70,7 +68,7 @@ void setup()
   BleControllerSlave::startPrphConnection();
 
   MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, out_pins, in_pins);
   MatrixScan::init();
   MatrixScan::startTask();
 }

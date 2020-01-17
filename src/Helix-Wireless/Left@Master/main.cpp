@@ -31,7 +31,7 @@
 
 using namespace hidpg;
 
-Set scanIDs, slaveIDs;
+Set scan_ids, slave_ids;
 // callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
 SemaphoreHandle_t mutex;
 
@@ -51,10 +51,10 @@ void prph_cannot_connect_callback()
 void receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
-  slaveIDs.clear();
+  slave_ids.clear();
   // 1バイト目は飛ばす
-  slaveIDs.addAll(data + 1, len - 1);
-  HidEngine::applyToKeymap(scanIDs | slaveIDs);
+  slave_ids.addAll(data + 1, len - 1);
+  HidEngine::applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
@@ -62,16 +62,16 @@ void cent_disconnect_callback(uint8_t index, uint8_t reason)
 {
   // 切断されたらキーが押しっぱなしにならないように空のデータを送る
   xSemaphoreTake(mutex, portMAX_DELAY);
-  slaveIDs.clear();
-  HidEngine::applyToKeymap(scanIDs | slaveIDs);
+  slave_ids.clear();
+  HidEngine::applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
 void matrix_scan_callback(const Set &ids)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
-  scanIDs = ids;
-  HidEngine::applyToKeymap(scanIDs | slaveIDs);
+  scan_ids = ids;
+  HidEngine::applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
@@ -91,12 +91,12 @@ void setup()
   BleController::startCentConnection();
 
   MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, out_pins, in_pins);
   MatrixScan::init();
   MatrixScan::startTask();
 
   HidEngine::setKeymap(keymap);
-  HidEngine::setSimulKeymap(simulKeymap);
+  HidEngine::setSimulKeymap(simul_keymap);
   HidEngine::setHidReporter(BleController::getHidReporter());
   HidEngine::init();
   HidEngine::startTask();

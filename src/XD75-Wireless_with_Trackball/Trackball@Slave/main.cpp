@@ -49,7 +49,7 @@ void receive_data_callback(uint8_t *data, uint16_t len)
   }
 }
 
-void motion_callback(int16_t deltaX, int16_t deltaY)
+void motion_callback(int16_t delta_x, int16_t delta_y)
 {
   struct
   {
@@ -57,9 +57,9 @@ void motion_callback(int16_t deltaX, int16_t deltaY)
     int16_t deltaY;
   } buf;
 
-  // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  buf.deltaX = -deltaX;
-  buf.deltaY = deltaY;
+  // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
+  buf.deltaX = -delta_x;
+  buf.deltaY = delta_y;
   BleControllerSlave::sendData(reinterpret_cast<uint8_t *>(&buf), sizeof(buf));
 }
 

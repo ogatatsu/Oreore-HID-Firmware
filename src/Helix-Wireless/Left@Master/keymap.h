@@ -133,6 +133,6 @@ Key keymap[] = {
   { 64, LY({ NK(_ArrowRight), CC(_PlayPause), CC(_PlayPause) }) },
 };
 
-SimulKey simulKeymap[] = {
+SimulKey simul_keymap[] = {
   { { 51, 56, 59 }, ToH(NOP, 2000, RESET) },
 };

@@ -37,16 +37,16 @@ void matrix_scan_callback(const Set &ids)
   HidEngine::applyToKeymap(ids);
 }
 
-void motion_callback(int16_t deltaX, int16_t deltaY)
+void motion_callback(int16_t delta_x, int16_t delta_y)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  HidEngine::mouseMove(-deltaX, deltaY);
+  HidEngine::mouseMove(-delta_x, delta_y);
 }
 
 void setup()
 {
   MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, out_pins, in_pins);
   MatrixScan::init();
   MatrixScan::startTask();
 

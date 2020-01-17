@@ -52,12 +52,12 @@ void receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 {
   struct Buf
   {
-    int16_t deltaX;
-    int16_t deltaY;
+    int16_t delta_x;
+    int16_t delta_y;
   };
 
   Buf *buf = reinterpret_cast<Buf *>(data);
-  HidEngine::mouseMove(buf->deltaX, buf->deltaY);
+  HidEngine::mouseMove(buf->delta_x, buf->delta_y);
 }
 
 void setup()
@@ -73,7 +73,7 @@ void setup()
   BleController::startCentConnection();
 
   MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, out_pins, in_pins);
   MatrixScan::init();
   MatrixScan::startTask();
 

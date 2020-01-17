@@ -40,10 +40,10 @@ void prph_cannot_connect_callback()
   sd_power_system_off();
 }
 
-void motion_callback(int16_t deltaX, int16_t deltaY)
+void motion_callback(int16_t delta_x, int16_t delta_y)
 {
-  // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  HidEngine::mouseMove(-deltaX, deltaY);
+  // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
+  HidEngine::mouseMove(-delta_x, delta_y);
 }
 
 void setup()

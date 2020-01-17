@@ -51,13 +51,13 @@ void setup()
   BleController::startPrphConnection();
 
   MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, outPins, inPins);
+  MatrixScan::setMatrix(matrix, out_pins, in_pins);
   MatrixScan::init();
   MatrixScan::startTask();
 
   HidEngine::setKeymap(keymap);
-  HidEngine::setSimulKeymap(simulKeymap);
-  HidEngine::setSeqKeymap(seqKeymap);
+  HidEngine::setSimulKeymap(simul_keymap);
+  HidEngine::setSeqKeymap(seq_keymap);
   HidEngine::setHidReporter(BleController::getHidReporter());
   HidEngine::init();
   HidEngine::startTask();

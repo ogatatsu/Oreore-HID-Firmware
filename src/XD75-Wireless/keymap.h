@@ -81,7 +81,7 @@ Key keymap[] = {
   { 47, NK(_U) },
   { 48, LY({ NK(_J), _______, NK(_ArrowDown) }) },
   { 49, NK(_M) },
-  { 50, TD({ { MO(_Ctrl), MO(_Ctrl) },
+  { 50, TD({ { MO(_RightCtrl), MO(_RightCtrl) },
              { MO(_Ctrl | _Shift), MO(_Ctrl | _Shift) },
              { MO(_Ctrl | _Shift | _Alt), MO(_Ctrl | _Shift | _Alt) } }) },
 
@@ -101,7 +101,7 @@ Key keymap[] = {
   { 62, NK(_P) },
   { 63, NK(_Semicolon) },
   { 64, NK(_Slash) },
-  { 65, NK(_ArrowUp) },
+  { 65, NK(_ArrowLeft) },
 
   { 66, LY({ NK(_Minus), _______, NK(_F11) }) },
   { 67, NK(_BracketLeft) },

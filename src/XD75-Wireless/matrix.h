@@ -18,17 +18,17 @@ constexpr uint8_t OUT11 = 27; // COL11
 constexpr uint8_t OUT12 = 30; // COL12
 constexpr uint8_t OUT13 = 29; // COL13
 constexpr uint8_t OUT14 = 28; // COL14
-constexpr uint8_t outPins[] = { OUT0, OUT1, OUT2, OUT3, OUT4, OUT5, OUT6, OUT7, OUT8, OUT9, OUT10, OUT11, OUT12, OUT13, OUT14 };
+constexpr uint8_t out_pins[] = { OUT0, OUT1, OUT2, OUT3, OUT4, OUT5, OUT6, OUT7, OUT8, OUT9, OUT10, OUT11, OUT12, OUT13, OUT14 };
 
 constexpr uint8_t IN0 = 16; // ROW0
 constexpr uint8_t IN1 = 31; // ROW1
 constexpr uint8_t IN2 = 13; // ROW2
 constexpr uint8_t IN3 = 15; // ROW3
 constexpr uint8_t IN4 = 5;  // ROW4
-constexpr uint8_t inPins[] = { IN0, IN1, IN2, IN3, IN4 };
+constexpr uint8_t in_pins[] = { IN0, IN1, IN2, IN3, IN4 };
 
-constexpr uint8_t outLength = sizeof(outPins) / sizeof(outPins[0]);
-constexpr uint8_t inLength = sizeof(inPins) / sizeof(inPins[0]);
+constexpr uint8_t out_len = sizeof(out_pins) / sizeof(out_pins[0]);
+constexpr uint8_t in_len = sizeof(in_pins) / sizeof(in_pins[0]);
 
 // スイッチとマトリックスの定義
 // IN0
@@ -112,7 +112,7 @@ Switch sw65(65);
 Switch sw70(70);
 Switch sw75(75);
 
-Switch *matrix[outLength][inLength] = {
+Switch *matrix[out_len][in_len] = {
   { &sw1, &sw2, &sw3, &sw4, &sw5 },
   { &sw6, &sw7, &sw8, &sw9, &sw10 },
   { &sw11, &sw12, &sw13, &sw14, &sw15 },
