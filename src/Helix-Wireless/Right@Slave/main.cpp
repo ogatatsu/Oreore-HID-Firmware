@@ -29,9 +29,9 @@
 
 using namespace hidpg;
 
-void prph_cannot_connect_callback()
+void cannot_connect_callback()
 {
-  MatrixScan::stopTask_and_setWakeUpInterrupt();
+  MatrixScan.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
@@ -40,7 +40,7 @@ void receive_data_callback(uint8_t *data, uint16_t len)
   // マスターがsystemOffになったらスレーブもsystemOffにする
   if (len == 1 && data[0] == 0)
   {
-    MatrixScan::stopTask_and_setWakeUpInterrupt();
+    MatrixScan.stopTask_and_setWakeUpInterrupt();
     sd_power_system_off();
   }
 }
@@ -53,7 +53,7 @@ void matrix_scan_callback(const Set &ids)
   // Setが空でも空という情報は送りたいので１バイト目は適当になにか入れておいて、キーの押し情報は２バイト目以降に詰める
   buf[0] = 0;
   ids.toArray(buf + 1);
-  BleControllerSlave::sendData(buf, sizeof(buf));
+  BleControllerSlave.sendData(buf, sizeof(buf));
 }
 
 void setup()
@@ -61,20 +61,20 @@ void setup()
   // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
   // Serial.begin(115200);
 
-  BleControllerSlave::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleControllerSlave::setReceiveDataCallback(receive_data_callback);
-  BleControllerSlave::init();
+  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
+  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
+  BleControllerSlave.init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleControllerSlave::startPrphConnection();
+  BleControllerSlave.startConnection();
 
-  MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, out_pins, in_pins);
-  MatrixScan::init();
-  MatrixScan::startTask();
+  MatrixScan.setCallback(matrix_scan_callback);
+  MatrixScan.setMatrix(matrix, out_pins, in_pins);
+  MatrixScan.init();
+  MatrixScan.startTask();
 }
 
 void loop()
 {
-  BleControllerSlave::setBatteryLevel(BatteryUtil::readBatteryLevel());
+  BleControllerSlave.setBatteryLevel(BatteryUtil.readBatteryLevel());
   delay(300000); //5 minites
 }

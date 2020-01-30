@@ -13,29 +13,30 @@
 
 #include "BleCommand.h"
 #include "HidEngine.h"
+#include "KC.h"
 
 using namespace hidpg;
 
 Key keymap[] = {
   { 1, MS_MOV(10, 10) },
-  { 2, NK(_B) },
-  { 3, NK(_C) },
-  { 4, NK(_D) },
-  { 5, NK(_E) },
-  { 6, NK(_F) },
-  { 7, NK(_G) },
-  { 8, NK(_H) },
-  { 9, NK(_J) },
-  { 10, NK(_K) },
-  { 11, NK(_L) },
-  { 12, NK(_M) },
-  { 13, NK(_N) },
-  { 14, NK(_O) },
-  { 15, NK(_P) },
-  { 16, NK(_Q) },
-  { 17, NK(_R) },
-  { 18, NK(_S) },
-  { 19, NK(_T) },
+  { 2, NK(B) },
+  { 3, NK(C) },
+  { 4, NK(D) },
+  { 5, NK(E) },
+  { 6, NK(F) },
+  { 7, NK(G) },
+  { 8, NK(H) },
+  { 9, NK(J) },
+  { 10, NK(K) },
+  { 11, NK(L) },
+  { 12, NK(M) },
+  { 13, NK(N) },
+  { 14, NK(O) },
+  { 15, NK(P) },
+  { 16, NK(Q) },
+  { 17, NK(R) },
+  { 18, NK(S) },
+  { 19, NK(T) },
   { 20, SEQ_MODE },
 };
 

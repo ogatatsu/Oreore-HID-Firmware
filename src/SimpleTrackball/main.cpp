@@ -34,7 +34,7 @@ using namespace hidpg;
 
 PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INTERRUPT_PIN);
 
-void prph_cannot_connect_callback()
+void cannot_connect_callback()
 {
   pmw3360.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
@@ -43,7 +43,7 @@ void prph_cannot_connect_callback()
 void motion_callback(int16_t delta_x, int16_t delta_y)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
-  HidEngine::mouseMove(-delta_x, delta_y);
+  HidEngine.mouseMove(-delta_x, delta_y);
 }
 
 void setup()
@@ -51,22 +51,22 @@ void setup()
   // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
   // Serial.begin(115200);
 
-  BleController::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController::init();
+  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+  BleController.init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController::startPrphConnection();
+  BleController.Periph.startConnection();
 
   pmw3360.setCallback(motion_callback);
   pmw3360.init();
   pmw3360.startTask();
 
-  HidEngine::setHidReporter(BleController::getHidReporter());
-  HidEngine::init();
-  HidEngine::startTask();
+  HidEngine.setHidReporter(BleController.Periph.getHidReporter());
+  HidEngine.init();
+  HidEngine.startTask();
 }
 
 void loop()
 {
-  BleController::setBatteryLevel(BatteryUtil::readBatteryLevel());
+  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
   delay(300000); //5 minites
 }

@@ -29,15 +29,15 @@
 
 using namespace hidpg;
 
-void prph_cannot_connect_callback()
+void cannot_connect_callback()
 {
-  MatrixScan::stopTask_and_setWakeUpInterrupt();
+  MatrixScan.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
 void matrix_scan_callback(const Set &ids)
 {
-  HidEngine::applyToKeymap(ids);
+  HidEngine.applyToKeymap(ids);
 }
 
 void setup()
@@ -45,24 +45,24 @@ void setup()
   // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
   // Serial.begin(115200);
 
-  BleController::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController::init();
+  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+  BleController.init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController::startPrphConnection();
+  BleController.Periph.startConnection();
 
-  MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, out_pins, in_pins);
-  MatrixScan::init();
-  MatrixScan::startTask();
+  MatrixScan.setCallback(matrix_scan_callback);
+  MatrixScan.setMatrix(matrix, out_pins, in_pins);
+  MatrixScan.init();
+  MatrixScan.startTask();
 
-  HidEngine::setKeymap(keymap);
-  HidEngine::setHidReporter(BleController::getHidReporter());
-  HidEngine::init();
-  HidEngine::startTask();
+  HidEngine.setKeymap(keymap);
+  HidEngine.setHidReporter(BleController.Periph.getHidReporter());
+  HidEngine.init();
+  HidEngine.startTask();
 }
 
 void loop()
 {
-  BleController::setBatteryLevel(BatteryUtil::readBatteryLevel());
+  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
   delay(300000); //5 minites
 }

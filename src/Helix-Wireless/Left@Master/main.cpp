@@ -40,21 +40,21 @@ void prph_cannot_connect_callback()
   // スレーブにsystemOffにすることを通知する
   // なんでもよいけどとりあえず0を送っておく
   uint8_t data = 0;
-  BleController::sendData(0, &data, 1);
+  BleController.Central.sendData(0, &data, 1);
   delay(1000);
 
-  BleController::stopCentConnection();
-  MatrixScan::stopTask_and_setWakeUpInterrupt();
+  BleController.Central.stopConnection();
+  MatrixScan.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
-void receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
+void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
   slave_ids.clear();
   // 1バイト目は飛ばす
   slave_ids.addAll(data + 1, len - 1);
-  HidEngine::applyToKeymap(scan_ids | slave_ids);
+  HidEngine.applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
@@ -63,7 +63,7 @@ void cent_disconnect_callback(uint8_t index, uint8_t reason)
   // 切断されたらキーが押しっぱなしにならないように空のデータを送る
   xSemaphoreTake(mutex, portMAX_DELAY);
   slave_ids.clear();
-  HidEngine::applyToKeymap(scan_ids | slave_ids);
+  HidEngine.applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
@@ -71,7 +71,7 @@ void matrix_scan_callback(const Set &ids)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
   scan_ids = ids;
-  HidEngine::applyToKeymap(scan_ids | slave_ids);
+  HidEngine.applyToKeymap(scan_ids | slave_ids);
   xSemaphoreGive(mutex);
 }
 
@@ -82,28 +82,28 @@ void setup()
 
   mutex = xSemaphoreCreateMutex();
 
-  BleController::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController::setReceiveDataCallback(receive_data_callback);
-  BleController::setCentDisconnectCallback(cent_disconnect_callback);
-  BleController::init();
+  BleController.Periph.setCannnotConnectCallback(prph_cannot_connect_callback);
+  BleController.Central.setReceiveDataCallback(cent_receive_data_callback);
+  BleController.Central.setDisconnectCallback(cent_disconnect_callback);
+  BleController.init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController::startPrphConnection();
-  BleController::startCentConnection();
+  BleController.Periph.startConnection();
+  BleController.Central.startConnection();
 
-  MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, out_pins, in_pins);
-  MatrixScan::init();
-  MatrixScan::startTask();
+  MatrixScan.setCallback(matrix_scan_callback);
+  MatrixScan.setMatrix(matrix, out_pins, in_pins);
+  MatrixScan.init();
+  MatrixScan.startTask();
 
-  HidEngine::setKeymap(keymap);
-  HidEngine::setSimulKeymap(simul_keymap);
-  HidEngine::setHidReporter(BleController::getHidReporter());
-  HidEngine::init();
-  HidEngine::startTask();
+  HidEngine.setKeymap(keymap);
+  HidEngine.setSimulKeymap(simul_keymap);
+  HidEngine.setHidReporter(BleController.Periph.getHidReporter());
+  HidEngine.init();
+  HidEngine.startTask();
 }
 
 void loop()
 {
-  BleController::setBatteryLevel(BatteryUtil::readBatteryLevel());
+  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
   delay(300000); //5 minites
 }

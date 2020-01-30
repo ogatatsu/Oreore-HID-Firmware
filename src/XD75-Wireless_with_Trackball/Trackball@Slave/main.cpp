@@ -33,7 +33,7 @@ using namespace hidpg;
 
 PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INTERRUPT_PIN);
 
-void prph_cannot_connect_callback()
+void cannot_connect_callback()
 {
   pmw3360.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
@@ -60,7 +60,7 @@ void motion_callback(int16_t delta_x, int16_t delta_y)
   // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
   buf.deltaX = -delta_x;
   buf.deltaY = delta_y;
-  BleControllerSlave::sendData(reinterpret_cast<uint8_t *>(&buf), sizeof(buf));
+  BleControllerSlave.sendData(reinterpret_cast<uint8_t *>(&buf), sizeof(buf));
 }
 
 void setup()
@@ -68,11 +68,11 @@ void setup()
   // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
   // Serial.begin(115200);
 
-  BleControllerSlave::setPrphCannnotConnectCallback(prph_cannot_connect_callback);
-  BleControllerSlave::setReceiveDataCallback(receive_data_callback);
-  BleControllerSlave::init();
+  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
+  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
+  BleControllerSlave.init();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleControllerSlave::startPrphConnection();
+  BleControllerSlave.startConnection();
 
   pmw3360.setCallback(motion_callback);
   pmw3360.init();
@@ -81,6 +81,6 @@ void setup()
 
 void loop()
 {
-  BleControllerSlave::setBatteryLevel(BatteryUtil::readBatteryLevel());
+  BleControllerSlave.setBatteryLevel(BatteryUtil.readBatteryLevel());
   delay(300000); //5 minites
 }

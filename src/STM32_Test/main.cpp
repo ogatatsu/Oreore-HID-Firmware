@@ -34,34 +34,34 @@ PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INT
 
 void matrix_scan_callback(const Set &ids)
 {
-  HidEngine::applyToKeymap(ids);
+  HidEngine.applyToKeymap(ids);
 }
 
 void motion_callback(int16_t delta_x, int16_t delta_y)
 {
   // トラックボールはセンサーを逆向きに取り付けるのでdeltaXを-にする
-  HidEngine::mouseMove(-delta_x, delta_y);
+  HidEngine.mouseMove(-delta_x, delta_y);
 }
 
 void setup()
 {
-  MatrixScan::setCallback(matrix_scan_callback);
-  MatrixScan::setMatrix(matrix, out_pins, in_pins);
-  MatrixScan::init();
-  MatrixScan::startTask();
+  MatrixScan.setCallback(matrix_scan_callback);
+  MatrixScan.setMatrix(matrix, out_pins, in_pins);
+  MatrixScan.init();
+  MatrixScan.startTask();
 
   pmw3360.setCallback(motion_callback);
   pmw3360.init();
   pmw3360.startTask();
 
-  STM32Hid::init();
+  STM32Hid.init();
 
-  HidEngine::setKeymap(keymap);
-  //HidEngine::setSimulKeymap(simulKeymap);
-  //HidEngine::setSeqKeymap(seqKeymap);
-  HidEngine::setHidReporter(STM32Hid::getHidReporter());
-  HidEngine::init();
-  HidEngine::startTask();
+  HidEngine.setKeymap(keymap);
+  //HidEngine.setSimulKeymap(simulKeymap);
+  //HidEngine.setSeqKeymap(seqKeymap);
+  HidEngine.setHidReporter(STM32Hid.getHidReporter());
+  HidEngine.init();
+  HidEngine.startTask();
 
   vTaskStartScheduler();
 

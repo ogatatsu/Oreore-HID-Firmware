@@ -1,18 +1,19 @@
 #include "HidEngine.h"
+#include "KC.h"
 
 using namespace hidpg;
 
 static Key keymap[] = {
-  { 1, NK(_A) },
-  { 2, NK(_B) },
-  { 3, NK(_C) },
-  { 4, NK(_D) },
-  { 5, NK(_E) },
-  { 6, NK(_F) },
-  { 7, NK(_G) },
-  { 8, NK(_H) },
-  { 9, NK(_I) },
-  { 10, NK(_J) },
-  { 11, NK(_K) },
-  { 12, NK(_L) },
+  { 1, NK(A) },
+  { 2, NK(B) },
+  { 3, NK(C) },
+  { 4, NK(D) },
+  { 5, NK(E) },
+  { 6, NK(F) },
+  { 7, NK(G) },
+  { 8, NK(H) },
+  { 9, NK(I) },
+  { 10, NK(J) },
+  { 11, NK(K) },
+  { 12, NK(L) },
 };
