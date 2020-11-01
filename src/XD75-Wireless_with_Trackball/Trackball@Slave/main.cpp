@@ -22,20 +22,18 @@
   THE SOFTWARE.
 */
 
-#include "BatteryUtil.h"
-#include "BleControllerSlave.h"
-#include "PMW3360.h"
+#include "config.h"
 
-#define PMW3360_NCS_PIN 25
-#define PMW3360_INTERRUPT_PIN 23
+#include "BleControllerSlave.h"
+#include "PMW3360DM.h"
 
 using namespace hidpg;
 
-PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INTERRUPT_PIN);
+PMW3360DM pmw3360dm = PMW3360DM::create<0>(ThreadSafeSPI, PMW3360DM_NCS_PIN, PMW3360DM_INTERRUPT_PIN);
 
 void cannot_connect_callback()
 {
-  pmw3360.stopTask_and_setWakeUpInterrupt();
+  pmw3360dm.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
@@ -44,43 +42,55 @@ void receive_data_callback(uint8_t *data, uint16_t len)
   // マスターがsystemOffになったらスレーブもsystemOffにする
   if (len == 1 && data[0] == 0)
   {
-    pmw3360.stopTask_and_setWakeUpInterrupt();
+    pmw3360dm.stopTask_and_setWakeUpInterrupt();
     sd_power_system_off();
   }
 }
 
-void motion_callback(int16_t delta_x, int16_t delta_y)
+void motion_callback()
 {
   struct
   {
-    int16_t deltaX;
-    int16_t deltaY;
+    int16_t delta_x;
+    int16_t delta_y;
   } buf;
 
+  BleControllerSlave.waitReady();
+  pmw3360dm.readDelta(&buf.delta_x, &buf.delta_y);
   // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
-  buf.deltaX = -delta_x;
-  buf.deltaY = delta_y;
+  buf.delta_x *= -1;
   BleControllerSlave.sendData(reinterpret_cast<uint8_t *>(&buf), sizeof(buf));
 }
 
 void setup()
 {
-  // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
-  // Serial.begin(115200);
-
   BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
   BleControllerSlave.setReceiveDataCallback(receive_data_callback);
-  BleControllerSlave.init();
+  BleControllerSlave.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleControllerSlave.startConnection();
 
-  pmw3360.setCallback(motion_callback);
-  pmw3360.init();
-  pmw3360.startTask();
+  pmw3360dm.setCallback(motion_callback);
+  pmw3360dm.begin();
+  pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
+}
+
+// 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
+#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
+#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+
+uint8_t readBatteryLevel()
+{
+  analogReference(AR_INTERNAL);
+  analogReadResolution(10);
+  uint32_t val = analogReadVDD();
+
+  int level = map(val, MIN_ANALOG_VALUE, MAX_ANALOG_VALUE, 0, 100);
+  return constrain(level, 0, 100);
 }
 
 void loop()
 {
-  BleControllerSlave.setBatteryLevel(BatteryUtil.readBatteryLevel());
-  delay(300000); //5 minites
+  BleControllerSlave.setBatteryLevel(readBatteryLevel());
+  delay(60000); //1 minites
 }

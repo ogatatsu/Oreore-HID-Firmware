@@ -22,51 +22,66 @@
   THE SOFTWARE.
 */
 
-#include "BatteryUtil.h"
+#include "config.h"
+
 #include "BleController.h"
 #include "HidEngine.h"
-#include "PMW3360.h"
-
-#define PMW3360_NCS_PIN 25
-#define PMW3360_INTERRUPT_PIN 23
+#include "PMW3360DM.h"
 
 using namespace hidpg;
 
-PMW3360 pmw3360 = PMW3360::create<0>(ThreadSafeSPI, PMW3360_NCS_PIN, PMW3360_INTERRUPT_PIN);
+PMW3360DM pmw3360dm = PMW3360DM::create<0>(ThreadSafeSPI, PMW3360DM_NCS_PIN, PMW3360DM_INTERRUPT_PIN);
 
 void cannot_connect_callback()
 {
-  pmw3360.stopTask_and_setWakeUpInterrupt();
+  pmw3360dm.stopTask_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
-void motion_callback(int16_t delta_x, int16_t delta_y)
+void motion_callback()
 {
+  HidEngine.mouseMove();
+}
+
+void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+{
+  pmw3360dm.readDelta(delta_x, delta_y);
   // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
-  HidEngine.mouseMove(-delta_x, delta_y);
+  *delta_x *= -1;
 }
 
 void setup()
 {
-  // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
-  // Serial.begin(115200);
-
   BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
-  BleController.init();
+  BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController.Periph.startConnection();
 
-  pmw3360.setCallback(motion_callback);
-  pmw3360.init();
-  pmw3360.startTask();
-
   HidEngine.setHidReporter(BleController.Periph.getHidReporter());
-  HidEngine.init();
-  HidEngine.startTask();
+  HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
+  HidEngine.begin();
+
+  pmw3360dm.setCallback(motion_callback);
+  pmw3360dm.begin();
+  pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
+}
+
+// 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
+#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
+#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+
+uint8_t readBatteryLevel()
+{
+  analogReference(AR_INTERNAL);
+  analogReadResolution(10);
+  uint32_t val = analogReadVDD();
+
+  int level = map(val, MIN_ANALOG_VALUE, MAX_ANALOG_VALUE, 0, 100);
+  return constrain(level, 0, 100);
 }
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
-  delay(300000); //5 minites
+  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  delay(60000); //1 minites
 }

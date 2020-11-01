@@ -2,8 +2,13 @@
 #pragma once
 
 // デバイスの名前、ペアリングする時にPCやスマホ側に出てくる名前
-#define DEVICE_NAME "4x5 keypad"
+#define BLE_DEVICE_NAME "4x5 keypad"
 
 // 割り込みにSense signalを使用するか
-// nRF52でなおかつcustom version frameworkでのみ使用可能
-#define USE_SENSE_INTERRUPT true
+// nRF52でのみ使用可能
+#define MATRIX_SCAN_USE_SENSE_INTERRUPT true
+
+// 電池の最大電圧
+#define MAX_BATTERY_VOLTAGE 3.0
+// 電池の最小電圧
+#define MIN_BATTERY_VOLTAGE 2.0

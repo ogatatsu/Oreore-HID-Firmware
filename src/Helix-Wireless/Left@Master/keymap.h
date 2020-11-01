@@ -118,7 +118,7 @@ Key keymap[] = {
   { 49, LY({ NK(Slash), NK(End), NK(PageUp) }) },
   { 50, LY({ NK(Enter), _______, _______ }) },
 
-  { 51, NOP },
+  { 51, NOP() },
   { 52, LY({ NK(Escape), _______, _______ }) },
   { 53, LY({ MO(Alt), _______, _______ }) },
   { 54, LY({ MO(Gui), _______, _______ }) },
@@ -135,5 +135,5 @@ Key keymap[] = {
 };
 
 SimulKey simul_keymap[] = {
-  { { 51, 56, 59 }, ToH(NOP, 2000, RESET) },
+  { { 51, 56, 59 }, ToH(NOP(), 2000, RESET()) },
 };

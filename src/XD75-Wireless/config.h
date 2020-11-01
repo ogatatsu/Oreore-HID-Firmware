@@ -2,17 +2,19 @@
 #pragma once
 
 // デバイスの名前、ペアリングする時にPCやスマホ側に出てくる名前
-#define DEVICE_NAME "XD75 Wireless"
+#define BLE_DEVICE_NAME "XD75 Wireless"
 
 // アドバタイジング時に点滅させるLEDのピン番号
-#define ADV_LED_PIN 14
-
-// LEDをHighDriveで光らせるかどうか
-#define IS_HIGH_DRIVE true
+#define BLE_ADV_LED_PIN 14
 
 // スイッチがHIGHとLOWどちらでONになるか
-#define ACTIVE_STATE HIGH
+#define MATRIX_SCAN_ACTIVE_STATE HIGH
 
 // 割り込みにSense signalを使用するか
-// nRF52でなおかつcustom version frameworkでのみ使用可能
-#define USE_SENSE_INTERRUPT true
+// nRF52でのみ使用可能
+#define MATRIX_SCAN_USE_SENSE_INTERRUPT true
+
+// 電池の最大電圧
+#define MAX_BATTERY_VOLTAGE 3.0
+// 電池の最小電圧
+#define MIN_BATTERY_VOLTAGE 2.0

@@ -37,11 +37,11 @@ Key keymap[] = {
   { 17, NK(R) },
   { 18, NK(S) },
   { 19, NK(T) },
-  { 20, SEQ_MODE },
+  { 20, SEQ_MODE() },
 };
 
 SimulKey simul_keymap[] = {
-  { { 3, 4, 5 }, ToH(NOP, 2000, RESET) },
+  { { 3, 4, 5 }, ToH(NOP(), 2000, RESET()) },
 };
 
 SeqKey seq_keymap[] = {

@@ -24,12 +24,19 @@
 
 #include "config.h"
 
-#include "BatteryUtil.h"
 #include "BleController.h"
 #include "keymap.h"
 #include "matrix.h"
 
 using namespace hidpg;
+
+// callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
+SemaphoreHandle_t mutex;
+
+int16_t delta_x_sum = 0;
+int16_t delta_y_sum = 0;
+
+bool is_mouse_move_called = false;
 
 void prph_cannot_connect_callback()
 {
@@ -57,35 +64,66 @@ void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
   };
 
   Buf *buf = reinterpret_cast<Buf *>(data);
-  HidEngine.mouseMove(buf->delta_x, buf->delta_y);
+
+  xSemaphoreTake(mutex, portMAX_DELAY);
+  delta_x_sum += buf->delta_x;
+  delta_y_sum += buf->delta_y;
+  if (is_mouse_move_called == false)
+  {
+    HidEngine.mouseMove();
+    is_mouse_move_called = true;
+  }
+  xSemaphoreGive(mutex);
+}
+
+void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+{
+  xSemaphoreTake(mutex, portMAX_DELAY);
+  *delta_x = delta_x_sum;
+  *delta_y = delta_y_sum;
+  delta_x_sum = delta_y_sum = 0;
+  is_mouse_move_called = false;
+  xSemaphoreGive(mutex);
 }
 
 void setup()
 {
-  // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
-  // Serial.begin(115200);
+  mutex = xSemaphoreCreateMutex();
 
   BleController.Periph.setCannnotConnectCallback(prph_cannot_connect_callback);
   BleController.Central.setReceiveDataCallback(cent_receive_data_callback);
-  BleController.init();
+  BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController.Periph.startConnection();
   BleController.Central.startConnection();
 
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
-  MatrixScan.init();
-  MatrixScan.startTask();
+  MatrixScan.begin();
 
   HidEngine.setKeymap(keymap);
-  HidEngine.setTrackmap(trackmap);
+  HidEngine.setTrackMap(trackmap);
+  HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setHidReporter(BleController.Periph.getHidReporter());
-  HidEngine.init();
-  HidEngine.startTask();
+  HidEngine.begin();
+}
+
+// 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
+#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
+#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+
+uint8_t readBatteryLevel()
+{
+  analogReference(AR_INTERNAL);
+  analogReadResolution(10);
+  uint32_t val = analogReadVDD();
+
+  int level = map(val, MIN_ANALOG_VALUE, MAX_ANALOG_VALUE, 0, 100);
+  return constrain(level, 0, 100);
 }
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
-  delay(300000); //5 minites
+  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  delay(60000); //1 minites
 }

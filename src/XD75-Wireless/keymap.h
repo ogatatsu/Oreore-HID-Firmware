@@ -19,26 +19,26 @@ using namespace hidpg;
    */
 
 Key keymap[] = {
-  { 1, LY({ NK(Escape), _______, ToH(NK(Escape), 2000, RESET) }) },
+  { 1, LY({ NK(Escape), _______, ToH(NK(Escape), 2000, RESET()) }) },
   { 2, LY({ NK(Tab), _______, CK(Gui, Tab) }) },
   { 3, TD({ { MO(Ctrl), MO(Ctrl) },
             { MO(Ctrl + Shift), MO(Ctrl + Shift) },
             { MO(Ctrl + Shift + Alt), MO(Ctrl + Shift + Alt) } }) },
-  { 4, DBL(SL(1), TD({ { OSM(Shift), OSM(Shift) },
+  { 4, DBL(SL(1), TD({ { MO(Shift), MO(Shift) },
                        { CK(Shift, CapsLock), CK(Shift, CapsLock) } })) },
-  { 5, SEQ_MODE },
+  { 5, SEQ_MODE() },
 
   { 6, LY({ NK(_1), _______, ToH(NK(F1), 1500, BT(1)) }) },
   { 7, NK(Q) },
   { 8, LY({ NK(A), _______, NK(Home) }) },
   { 9, NK(Z) },
-  { 10, NOP },
+  { 10, NOP() },
 
   { 11, LY({ NK(_2), _______, ToH(NK(F2), 1500, BT(2)) }) },
   { 12, NK(W) },
   { 13, LY({ NK(S), _______, NK(PageUp) }) },
   { 14, NK(X) },
-  { 15, NOP },
+  { 15, NOP() },
 
   { 16, LY({ NK(_3), _______, ToH(NK(F3), 1500, BT(3)) }) },
   { 17, NK(E) },
@@ -90,7 +90,7 @@ Key keymap[] = {
   { 52, NK(I) },
   { 53, LY({ NK(K), _______, NK(ArrowUp) }) },
   { 54, NK(Comma) },
-  { 55, NOP },
+  { 55, NOP() },
 
   { 56, LY({ NK(_9), _______, NK(F9) }) },
   { 57, NK(O) },
@@ -113,7 +113,7 @@ Key keymap[] = {
   { 71, LY({ NK(Equal), _______, NK(F12) }) },
   { 72, NK(BracketRight) },
   { 73, NK(Backslash) },
-  { 74, DBL(SL(1), TD({ { OSM(Shift), OSM(Shift) },
+  { 74, DBL(SL(1), TD({ { MO(Shift), MO(Shift) },
                         { CK(Shift, CapsLock), CK(Shift, CapsLock) } })) },
   { 75, NK(ArrowRight) },
 };

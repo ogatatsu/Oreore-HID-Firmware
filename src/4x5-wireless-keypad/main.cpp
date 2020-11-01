@@ -22,7 +22,8 @@
   THE SOFTWARE.
 */
 
-#include "BatteryUtil.h"
+#include "config.h"
+
 #include "BleController.h"
 #include "keymap.h"
 #include "matrix.h"
@@ -42,29 +43,38 @@ void matrix_scan_callback(const Set &ids)
 
 void setup()
 {
-  // シリアルをオンにすると消費電流が増えるのでデバッグ時以外はオフにする
-  // Serial.begin(115200);
-
   BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
-  BleController.init();
+  BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController.Periph.startConnection();
 
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
-  MatrixScan.init();
-  MatrixScan.startTask();
+  MatrixScan.begin();
 
   HidEngine.setKeymap(keymap);
   HidEngine.setSimulKeymap(simul_keymap);
   HidEngine.setSeqKeymap(seq_keymap);
   HidEngine.setHidReporter(BleController.Periph.getHidReporter());
-  HidEngine.init();
-  HidEngine.startTask();
+  HidEngine.begin();
+}
+
+// 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
+#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
+#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+
+uint8_t readBatteryLevel()
+{
+  analogReference(AR_INTERNAL);
+  analogReadResolution(10);
+  uint32_t val = analogReadVDD();
+
+  int level = map(val, MIN_ANALOG_VALUE, MAX_ANALOG_VALUE, 0, 100);
+  return constrain(level, 0, 100);
 }
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(BatteryUtil.readBatteryLevel());
-  delay(300000); //5 minites
+  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  delay(60000); //1 minites
 }
