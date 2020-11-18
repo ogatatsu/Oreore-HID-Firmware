@@ -169,6 +169,7 @@ void setup()
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
+  HidEngine.setTrackMap(trackMap);
   HidEngine.begin();
 
   // Increase Blink rate to different from PrPh advertising mode
