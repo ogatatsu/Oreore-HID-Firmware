@@ -153,7 +153,7 @@ void setup()
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("Bluefruit52 Central");
+  Bluefruit.setName("Relacon Usb Dongle");
 
   // Init Realacon Host
   relacon.begin();
@@ -186,9 +186,10 @@ void setup()
   Bluefruit.Scanner.filterService(relacon); // only report HID service
   Bluefruit.Scanner.useActiveScan(false);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
+
+  suspendLoop();
 }
 
 void loop()
 {
-  delay(100);
 }
