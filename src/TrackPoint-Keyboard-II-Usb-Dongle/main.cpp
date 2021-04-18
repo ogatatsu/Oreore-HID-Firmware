@@ -1,5 +1,6 @@
 
 #include "Arduino.h"
+// #include "BlinkLed.h"
 #include "HidEngine.h"
 #include "Set.h"
 #include "TPKBD2BleHost.h"
@@ -18,6 +19,7 @@ int16_t wheel_sum = 0;
 bool is_mouse_move_called = false;
 bool is_rotate_encoder_called = false;
 Set kbd_ids, btn_ids;
+// BlinkLed scan_led(LED_BUILTIN, LOW);
 
 void scan_callback(ble_gap_evt_adv_report_t *report)
 {
@@ -54,6 +56,7 @@ void connect_callback(uint16_t conn_handle)
     tpkbd2.enableKeyboard();
     tpkbd2.enableTrackpoint();
     tpkbd2.enableConsumer();
+    // scan_led.off();
 
     Serial.println("Ready to receive from peripheral");
   }
@@ -73,6 +76,8 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 
   Serial.print("Disconnected, reason = 0x");
   Serial.println(reason, HEX);
+
+  // scan_led.blink();
 }
 
 void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
@@ -198,6 +203,8 @@ void setup()
 
   ScrollOrTap::init();
 
+  // scan_led.begin();
+
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
   Bluefruit.setName("TrackPoint-Keyboard-II-Usb-Dongle");
@@ -232,6 +239,7 @@ void setup()
   Bluefruit.Scanner.setInterval(160, 80); // in unit of 0.625 ms
   Bluefruit.Scanner.useActiveScan(true);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
+  // scan_led.blink();           // scan status led
 
   suspendLoop();
 }
