@@ -6,5 +6,5 @@ BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ColumnLimit: 0
-AccessModifierOffset: -4
+AccessModifierOffset: -2
 Cpp11BracedListStyle: false
