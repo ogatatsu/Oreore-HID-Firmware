@@ -59,13 +59,9 @@ public:
   bool enableTrackball();
   bool disableTrackball();
 
-  void getTrackballReport(relacon_trackball_report_t *report);
-
   // Consumer API
   bool enableConsumer();
   bool disableConsumer();
-
-  void getConsumerReport(relacon_consumer_report_t *report);
 
   // Report callback
   void setTrackballReportCallback(trackball_callback_t fp);
@@ -74,9 +70,6 @@ public:
 protected:
   trackball_callback_t _trackball_cb;
   consumer_callback_t _consumer_cb;
-
-  relacon_trackball_report_t _last_trackball_report;
-  relacon_consumer_report_t _last_consumer_report;
 
   BLEClientCharacteristic _trackball_input;
   BLEClientCharacteristic _consumer_input;

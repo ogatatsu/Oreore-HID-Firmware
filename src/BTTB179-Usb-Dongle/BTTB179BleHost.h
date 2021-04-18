@@ -53,14 +53,11 @@ public:
   bool enableTrackball();
   bool disableTrackball();
 
-  void getTrackballReport(bttb179_trackball_report_t *report);
-
   // Report callback
   void setTrackballReportCallback(trackball_callback_t fp);
 
 protected:
   trackball_callback_t _trackball_cb;
-  bttb179_trackball_report_t _last_trackball_report;
   BLEClientCharacteristic _trackball_input;
 
   void _handle_trackball_input(uint8_t *data, uint16_t len);

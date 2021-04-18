@@ -164,7 +164,7 @@ void setup()
   Bluefruit.begin(0, 1);
   Bluefruit.setName("BTTB179 Usb Dongle");
 
-  // Init Realacon Host
+  // Init BTTB179 Host
   bttb179.begin();
   bttb179.setTrackballReportCallback(trackball_report_callback);
 

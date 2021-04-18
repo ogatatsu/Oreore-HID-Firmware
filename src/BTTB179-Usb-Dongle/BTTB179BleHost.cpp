@@ -28,7 +28,6 @@
 BTTB179BleHost::BTTB179BleHost(void)
     : BLEClientService(UUID16_SVC_HUMAN_INTERFACE_DEVICE),
       _trackball_cb(nullptr),
-      _last_trackball_report(),
       _trackball_input(UUID16_CHR_REPORT)
 {
 }
@@ -81,18 +80,10 @@ bool BTTB179BleHost::disableTrackball()
 
 void BTTB179BleHost::_handle_trackball_input(uint8_t *data, uint16_t len)
 {
-  varclr(&_last_trackball_report);
-  memcpy(&_last_trackball_report, data, len);
-
-  if (_trackball_cb)
+  if (_trackball_cb && (len == sizeof(bttb179_trackball_report_t)))
   {
-    _trackball_cb(&_last_trackball_report);
+    _trackball_cb(reinterpret_cast<bttb179_trackball_report_t *>(data));
   }
-}
-
-void BTTB179BleHost::getTrackballReport(bttb179_trackball_report_t *report)
-{
-  memcpy(report, &_last_trackball_report, sizeof(bttb179_trackball_report_t));
 }
 
 void BTTB179BleHost::trackball_client_notify_cb(BLEClientCharacteristic *chr, uint8_t *data, uint16_t len)

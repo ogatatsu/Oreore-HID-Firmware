@@ -29,8 +29,6 @@ RelaconBleHost::RelaconBleHost(void)
     : BLEClientService(UUID16_SVC_HUMAN_INTERFACE_DEVICE),
       _trackball_cb(nullptr),
       _consumer_cb(nullptr),
-      _last_trackball_report(),
-      _last_consumer_report(),
       _trackball_input(UUID16_CHR_REPORT),
       _consumer_input(UUID16_CHR_REPORT)
 {
@@ -91,18 +89,10 @@ bool RelaconBleHost::disableTrackball()
 
 void RelaconBleHost::_handle_trackball_input(uint8_t *data, uint16_t len)
 {
-  varclr(&_last_trackball_report);
-  memcpy(&_last_trackball_report, data, len);
-
-  if (_trackball_cb)
+  if (_trackball_cb && (len == sizeof(relacon_trackball_report_t)))
   {
-    _trackball_cb(&_last_trackball_report);
+    _trackball_cb(reinterpret_cast<relacon_trackball_report_t *>(data));
   }
-}
-
-void RelaconBleHost::getTrackballReport(relacon_trackball_report_t *report)
-{
-  memcpy(report, &_last_trackball_report, sizeof(relacon_trackball_report_t));
 }
 
 void RelaconBleHost::trackball_client_notify_cb(BLEClientCharacteristic *chr, uint8_t *data, uint16_t len)
@@ -126,18 +116,10 @@ bool RelaconBleHost::disableConsumer()
 
 void RelaconBleHost::_handle_consumer_input(uint8_t *data, uint16_t len)
 {
-  varclr(&_last_consumer_report);
-  memcpy(&_last_consumer_report, data, len);
-
-  if (_consumer_cb)
+  if (_consumer_cb && (len == sizeof(relacon_consumer_report_t)))
   {
-    _consumer_cb(&_last_consumer_report);
+    _consumer_cb(reinterpret_cast<relacon_consumer_report_t *>(data));
   }
-}
-
-void RelaconBleHost::getConsumerReport(relacon_consumer_report_t *report)
-{
-  memcpy(report, &_last_consumer_report, sizeof(relacon_consumer_report_t));
 }
 
 void RelaconBleHost::consumer_client_notify_cb(BLEClientCharacteristic *chr, uint8_t *data, uint16_t len)
