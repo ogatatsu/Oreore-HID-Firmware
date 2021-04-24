@@ -24,8 +24,8 @@ Key keymap[] = {
   { 3, TD({ { MO(Ctrl), MO(Ctrl) },
             { MO(Ctrl + Shift), MO(Ctrl + Shift) },
             { MO(Ctrl + Shift + Alt), MO(Ctrl + Shift + Alt) } }) },
-  { 4, DBL(SL1(1), TD({ { MO(Shift), MO(Shift) },
-                        { CK(Shift, CapsLock), CK(Shift, CapsLock) } })) },
+  { 4, MLT({ SL1(1), TD({ { MO(Shift), MO(Shift) },
+                          { CK(Shift, CapsLock), CK(Shift, CapsLock) } }) }) },
   { 5, SEQ_MODE() },
 
   { 6, LY1({ NK(_1), _______, ToH(NK(F1), 1500, BT(1)) }) },
@@ -113,7 +113,7 @@ Key keymap[] = {
   { 71, LY1({ NK(Equal), _______, NK(F12) }) },
   { 72, NK(BracketRight) },
   { 73, NK(Backslash) },
-  { 74, DBL(SL1(1), TD({ { MO(Shift), MO(Shift) },
-                         { CK(Shift, CapsLock), CK(Shift, CapsLock) } })) },
+  { 74, MLT({ SL1(1), TD({ { MO(Shift), MO(Shift) },
+                           { CK(Shift, CapsLock), CK(Shift, CapsLock) } }) }) },
   { 75, NK(ArrowRight) },
 };

@@ -139,9 +139,9 @@ Key keymap[] = {
   { 135 /* \(yen)       */, NK(Int1) },
   { 136 /* Kana         */, LY1({ NK(Backspace), NK(Delete) }) },
   { 137 /* \(BackSlash) */, NK(Int3) },
-  { 138 /* Henkan       */, TD({ { DBL(NK(Int4), NK(Lang1)), SL1(1) },
+  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), SL1(1) },
                                  { MS_CLK(ForwardButton), MS_CLK(ForwardButton) } }) },
-  { 139 /* Muhenkan     */, TD({ { DBL(NK(Int5), NK(Lang2)), SL1(1) },
+  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), SL1(1) },
                                  { MS_CLK(BackwardButton), MS_CLK(BackwardButton) } }) },
 
   { 200 /* LeftCtrl     */, NOP() },
