@@ -1,6 +1,7 @@
 
 #include "Arduino.h"
 // #include "BlinkLed.h"
+#include "DebounceIn.h"
 #include "HidEngine.h"
 #include "Set.h"
 #include "TPKBD2BleHost.h"
@@ -11,15 +12,22 @@
 using namespace hidpg;
 
 TPKBD2BleHost tpkbd2;
+
+// BlinkLed scan_led(LED_BUILTIN, LOW);
+
 SemaphoreHandle_t mov_mutex;
 SemaphoreHandle_t whl_mutex;
+SemaphoreHandle_t btn_mutex;
+StaticSemaphore_t mov_mutex_buffer;
+StaticSemaphore_t whl_mutex_buffer;
+StaticSemaphore_t btn_mutex_buffer;
+
 int16_t delta_x_sum = 0;
 int16_t delta_y_sum = 0;
 int16_t wheel_sum = 0;
 bool is_mouse_move_called = false;
 bool is_rotate_encoder_called = false;
-Set kbd_ids, btn_ids;
-// BlinkLed scan_led(LED_BUILTIN, LOW);
+Set key6_ids, other_ids;
 
 void scan_callback(ble_gap_evt_adv_report_t *report)
 {
@@ -98,34 +106,39 @@ void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
     return;
   }
 
-  kbd_ids.clear();
+  xSemaphoreTake(btn_mutex, portMAX_DELAY);
+  key6_ids.clear();
   for (int i = 0; i < 6; i++)
   {
     if (report->keycode[i] != 0)
-      kbd_ids.add(report->keycode[i]);
+    {
+      key6_ids.add(report->keycode[i]);
+    }
   }
-  kbd_ids.update(200, bitRead(report->modifier, 0)); // left ctrl
-  kbd_ids.update(201, bitRead(report->modifier, 1)); // left shift
-  kbd_ids.update(202, bitRead(report->modifier, 2)); // left alt
-  kbd_ids.update(203, bitRead(report->modifier, 3)); // left gui
-  kbd_ids.update(204, bitRead(report->modifier, 4)); // right ctrl
-  kbd_ids.update(205, bitRead(report->modifier, 5)); // right shift
-  kbd_ids.update(206, bitRead(report->modifier, 6)); // right alt
+  other_ids.update(200, bitRead(report->modifier, 0)); // left ctrl
+  other_ids.update(201, bitRead(report->modifier, 1)); // left shift
+  other_ids.update(202, bitRead(report->modifier, 2)); // left alt
+  other_ids.update(203, bitRead(report->modifier, 3)); // left gui
+  other_ids.update(204, bitRead(report->modifier, 4)); // right ctrl
+  other_ids.update(205, bitRead(report->modifier, 5)); // right shift
+  other_ids.update(206, bitRead(report->modifier, 6)); // right alt
   // このキーボードに right gui は付いて無い
 
-  HidEngine.applyToKeymap(kbd_ids | btn_ids);
+  HidEngine.applyToKeymap(key6_ids | other_ids);
+  xSemaphoreGive(btn_mutex);
 }
 
 void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
 {
   // Serial.printf("[Trackpoint] buttons = %2d, x = %4d, y = %4d, wheel = %2d\n", report->buttons, report->x, report->y, report->wheel);
 
-  // button
-  btn_ids.update(0, bitRead(report->buttons, 0)); // left button
-  btn_ids.update(1, bitRead(report->buttons, 1)); // right button
-  btn_ids.update(2, bitRead(report->buttons, 2)); // middle button
-
-  HidEngine.applyToKeymap(kbd_ids | btn_ids);
+  // mouse button
+  xSemaphoreTake(btn_mutex, portMAX_DELAY);
+  other_ids.update(0, bitRead(report->buttons, 0)); // left button
+  other_ids.update(1, bitRead(report->buttons, 1)); // right button
+  other_ids.update(2, bitRead(report->buttons, 2)); // middle button
+  HidEngine.applyToKeymap(key6_ids | other_ids);
+  xSemaphoreGive(btn_mutex);
 
   // mouse move
   if (report->x != 0 || report->y != 0)
@@ -141,7 +154,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
     xSemaphoreGive(mov_mutex);
   }
 
-  // wheel
+  // mouse wheel
   if (report->wheel != 0)
   {
     ScrollOrTap::notifyScroll();
@@ -172,6 +185,18 @@ void consumer_report_callback(tpkbd2_consumer_report_t *report)
   // HidEngine.applyToKeymap(ids);
 }
 
+void debounce_in_callback(uint8_t pin, bool state)
+{
+  // dongle button
+  if (pin == PIN_BUTTON1)
+  {
+    xSemaphoreTake(btn_mutex, portMAX_DELAY);
+    other_ids.update(255, !state);
+    HidEngine.applyToKeymap(key6_ids | other_ids);
+    xSemaphoreGive(btn_mutex);
+  }
+}
+
 void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
 {
   xSemaphoreTake(mov_mutex, portMAX_DELAY);
@@ -184,22 +209,23 @@ void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
 
 void read_encoder_step_callback(uint8_t encoder_id, int32_t *step)
 {
-  xSemaphoreTake(whl_mutex, portMAX_DELAY);
   if (encoder_id == 0)
   {
+    xSemaphoreTake(whl_mutex, portMAX_DELAY);
     *step = wheel_sum;
     wheel_sum = 0;
+    is_rotate_encoder_called = false;
+    xSemaphoreGive(whl_mutex);
   }
-  is_rotate_encoder_called = false;
-  xSemaphoreGive(whl_mutex);
 }
 
 void setup()
 {
   Serial.begin(115200);
 
-  mov_mutex = xSemaphoreCreateMutex();
-  whl_mutex = xSemaphoreCreateMutex();
+  mov_mutex = xSemaphoreCreateMutexStatic(&mov_mutex_buffer);
+  whl_mutex = xSemaphoreCreateMutexStatic(&whl_mutex_buffer);
+  btn_mutex = xSemaphoreCreateMutexStatic(&btn_mutex_buffer);
 
   ScrollOrTap::init();
 
@@ -218,12 +244,20 @@ void setup()
   // Init Usb HID
   UsbHid.begin();
 
+  // Init Dongle Button
+  DebounceIn.addPin(PIN_BUTTON1, INPUT_PULLUP, 10);
+  DebounceIn.setCallback(debounce_in_callback);
+  DebounceIn.begin();
+
   // Init HidEngine
+  Layer.setCallback(layer_change_state_callback);
   HidEngine.setHidReporter(UsbHid.getHidReporter());
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
+  HidEngine.setTrackMap(trackMap);
+  HidEngine.setSimulKeymap(simulKeymap);
   HidEngine.begin();
 
   // Increase Blink rate to different from PrPh advertising mode
@@ -246,4 +280,5 @@ void setup()
 
 void loop()
 {
+  // not used
 }
