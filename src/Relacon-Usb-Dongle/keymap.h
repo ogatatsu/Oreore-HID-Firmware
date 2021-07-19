@@ -25,5 +25,5 @@ Encoder encoderMap[] = {
 };
 
 Track trackMap[] = {
-  { 0, 20, AngleSnap::Disable, MS_SCR(1, 0), MS_SCR(-1, 0), MS_SCR(0, -1), MS_SCR(0, 1) }
+  { 0, 20, AngleSnap::Enable, MS_SCR(1, 0), MS_SCR(-1, 0), _______, _______ }
 };

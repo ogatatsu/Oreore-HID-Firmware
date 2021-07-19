@@ -1,6 +1,7 @@
 
 #include "Arduino.h"
 #include "BTTB179BleHost.h"
+#include "BlinkLed.h"
 #include "HidEngine.h"
 #include "Set.h"
 #include "UsbHid.h"
@@ -8,6 +9,8 @@
 #include "keymap.h"
 
 using namespace hidpg;
+
+BlinkLed scan_led(LED_BUILTIN, LOW);
 
 BTTB179BleHost bttb179;
 SemaphoreHandle_t mov_mutex;
@@ -40,27 +43,47 @@ void connect_callback(uint16_t conn_handle)
   Serial.println("Connected");
   Serial.print("Discovering HID  Service ... ");
 
+  BLEConnection *conn = Bluefruit.Connection(conn_handle);
+
   if (bttb179.discover(conn_handle))
   {
     Serial.println("Found it");
 
     // HID device mostly require pairing/bonding
-    if (!Bluefruit.requestPairing(conn_handle))
-    {
-      Serial.print("Failed to paired");
-      return;
-    }
-
-    bttb179.enableTrackball();
+    conn->requestPairing();
 
     Serial.println("Ready to receive from peripheral");
+
+    scan_led.off();
   }
   else
   {
     Serial.println("Found NONE");
 
     // disconnect since we couldn't find blehid service
-    Bluefruit.disconnect(conn_handle);
+    conn->disconnect();
+  }
+}
+
+void connection_secured_callback(uint16_t conn_handle)
+{
+  BLEConnection *conn = Bluefruit.Connection(conn_handle);
+
+  if (!conn->secured())
+  {
+    // It is possible that connection is still not secured by this time.
+    // This happens (central only) when we try to encrypt connection using stored bond keys
+    // but peer reject it (probably it remove its stored key).
+    // Therefore we will request an pairing again --> callback again when encrypted
+    conn->requestPairing();
+  }
+  else
+  {
+    Serial.println("Secured");
+
+    bttb179.enableTrackball();
+
+    Serial.println("Ready to receive from peripheral");
   }
 }
 
@@ -71,6 +94,8 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 
   Serial.print("Disconnected, reason = 0x");
   Serial.println(reason, HEX);
+
+  scan_led.blink();
 }
 
 void trackball_report_callback(bttb179_trackball_report_t *report)
@@ -160,9 +185,12 @@ void setup()
   mov_mutex = xSemaphoreCreateMutex();
   whl_mutex = xSemaphoreCreateMutex();
 
+  scan_led.begin();
+
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
   Bluefruit.setName("BTTB179 Usb Dongle");
+  Bluefruit.autoConnLed(false);
 
   // Init BTTB179 Host
   bttb179.begin();
@@ -177,26 +205,27 @@ void setup()
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
+  HidEngine.setTrackMap(trackMap);
   HidEngine.begin();
-
-  // Increase Blink rate to different from PrPh advertising mode
-  Bluefruit.setConnLedInterval(250);
 
   // Callbacks for Central
   Bluefruit.Central.setConnectCallback(connect_callback);
   Bluefruit.Central.setDisconnectCallback(disconnect_callback);
+  Bluefruit.Security.setSecuredCallback(connection_secured_callback);
 
   // Start Central Scanning
   Bluefruit.Scanner.setRxCallback(scan_callback);
   Bluefruit.Scanner.restartOnDisconnect(true);
-  Bluefruit.Scanner.setInterval(160, 80);    // in unit of 0.625 ms
+  Bluefruit.Scanner.setInterval(160, 80);   // in unit of 0.625 ms
   Bluefruit.Scanner.filterService(bttb179); // only report HID service
   Bluefruit.Scanner.useActiveScan(false);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
+  scan_led.blink();           // scan status led
 
   suspendLoop();
 }
 
 void loop()
 {
+  // not used
 }

@@ -1,6 +1,6 @@
 
 #include "Arduino.h"
-// #include "BlinkLed.h"
+#include "BlinkLed.h"
 #include "DebounceIn.h"
 #include "HidEngine.h"
 #include "Set.h"
@@ -11,10 +11,9 @@
 
 using namespace hidpg;
 
+BlinkLed scan_led(LED_BUILTIN, LOW);
+
 TPKBD2BleHost tpkbd2;
-
-// BlinkLed scan_led(LED_BUILTIN, LOW);
-
 SemaphoreHandle_t mov_mutex;
 SemaphoreHandle_t whl_mutex;
 SemaphoreHandle_t btn_mutex;
@@ -50,30 +49,49 @@ void connect_callback(uint16_t conn_handle)
   Serial.println("Connected");
   Serial.print("Discovering HID  Service ... ");
 
+  BLEConnection *conn = Bluefruit.Connection(conn_handle);
+
   if (tpkbd2.discover(conn_handle))
   {
     Serial.println("Found it");
 
     // HID device mostly require pairing/bonding
-    if (!Bluefruit.requestPairing(conn_handle))
-    {
-      Serial.print("Failed to paired");
-      return;
-    }
-
-    tpkbd2.enableKeyboard();
-    tpkbd2.enableTrackpoint();
-    tpkbd2.enableConsumer();
-    // scan_led.off();
+    conn->requestPairing();
 
     Serial.println("Ready to receive from peripheral");
+
+    scan_led.off();
   }
   else
   {
     Serial.println("Found NONE");
 
     // disconnect since we couldn't find blehid service
-    Bluefruit.disconnect(conn_handle);
+    conn->disconnect();
+  }
+}
+
+void connection_secured_callback(uint16_t conn_handle)
+{
+  BLEConnection *conn = Bluefruit.Connection(conn_handle);
+
+  if (!conn->secured())
+  {
+    // It is possible that connection is still not secured by this time.
+    // This happens (central only) when we try to encrypt connection using stored bond keys
+    // but peer reject it (probably it remove its stored key).
+    // Therefore we will request an pairing again --> callback again when encrypted
+    conn->requestPairing();
+  }
+  else
+  {
+    Serial.println("Secured");
+
+    tpkbd2.enableKeyboard();
+    tpkbd2.enableTrackpoint();
+    tpkbd2.enableConsumer();
+
+    Serial.println("Ready to receive from peripheral");
   }
 }
 
@@ -85,7 +103,7 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   Serial.print("Disconnected, reason = 0x");
   Serial.println(reason, HEX);
 
-  // scan_led.blink();
+  scan_led.blink();
 }
 
 void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
@@ -229,11 +247,12 @@ void setup()
 
   ScrollOrTap::init();
 
-  // scan_led.begin();
+  scan_led.begin();
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("TrackPoint-Keyboard-II-Usb-Dongle");
+  Bluefruit.setName("TrackPoint-KBD-II-Usb-Dongle");
+  Bluefruit.autoConnLed(false);
 
   // Init TrackPoint Keyboard II Host
   tpkbd2.begin();
@@ -260,12 +279,10 @@ void setup()
   HidEngine.setSimulKeymap(simulKeymap);
   HidEngine.begin();
 
-  // Increase Blink rate to different from PrPh advertising mode
-  Bluefruit.setConnLedInterval(250);
-
   // Callbacks for Central
   Bluefruit.Central.setConnectCallback(connect_callback);
   Bluefruit.Central.setDisconnectCallback(disconnect_callback);
+  Bluefruit.Security.setSecuredCallback(connection_secured_callback);
 
   // Start Central Scanning
   Bluefruit.Scanner.setRxCallback(scan_callback);
@@ -273,7 +290,7 @@ void setup()
   Bluefruit.Scanner.setInterval(160, 80); // in unit of 0.625 ms
   Bluefruit.Scanner.useActiveScan(true);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
-  // scan_led.blink();           // scan status led
+  scan_led.blink();           // scan status led
 
   suspendLoop();
 }
