@@ -251,7 +251,7 @@ void setup()
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("TrackPoint-KBD-II-Usb-Dongle");
+  Bluefruit.setName("TrackPoint Keyboard II Custom");
   Bluefruit.autoConnLed(false);
 
   // Init TrackPoint Keyboard II Host

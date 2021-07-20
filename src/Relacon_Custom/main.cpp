@@ -178,7 +178,7 @@ void setup()
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("Relacon Usb Dongle");
+  Bluefruit.setName("Relacon Custom");
   Bluefruit.autoConnLed(false);
 
   // Init Realacon Host

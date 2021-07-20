@@ -189,7 +189,7 @@ void setup()
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("BTTB179 Usb Dongle");
+  Bluefruit.setName("BTTB179 Custom");
   Bluefruit.autoConnLed(false);
 
   // Init BTTB179 Host
