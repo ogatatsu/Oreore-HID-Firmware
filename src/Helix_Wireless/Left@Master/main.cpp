@@ -78,22 +78,23 @@ void setup()
 {
   mutex = xSemaphoreCreateMutex();
 
+  BleController.begin();
   BleController.Periph.setCannnotConnectCallback(prph_cannot_connect_callback);
   BleController.Central.setReceiveDataCallback(cent_receive_data_callback);
   BleController.Central.setDisconnectCallback(cent_disconnect_callback);
-  BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   BleController.Periph.startConnection();
   BleController.Central.startConnection();
+  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
 
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
-  MatrixScan.begin();
+  MatrixScan.start();
 
   HidEngine.setKeymap(keymap);
   HidEngine.setSimulKeymap(simul_keymap);
-  HidEngine.setHidReporter(BleController.Periph.getHidReporter());
-  HidEngine.begin();
+  HidEngine.setHidReporter(hid_reporter);
+  HidEngine.start();
 }
 
 // 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)

@@ -34,7 +34,7 @@ public:
     return 1;
   }
 
-  static void init()
+  static void begin()
   {
     _mutex = xSemaphoreCreateMutexStatic(&_mutex_buffer);
   }

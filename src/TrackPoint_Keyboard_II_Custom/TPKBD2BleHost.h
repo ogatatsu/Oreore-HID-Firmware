@@ -30,7 +30,7 @@
 #pragma pack(1)
 struct tpkbd2_keyboard_report_t
 {
-  uint8_t modifier;
+  uint8_t modifiers;
   uint8_t reserved;
   uint8_t keycode[6];
 };

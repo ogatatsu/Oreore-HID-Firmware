@@ -17,13 +17,14 @@ void setup()
 {
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
-  MatrixScan.begin();
+  MatrixScan.start();
 
   UsbHid.begin();
+  HidReporter *hid_reporter = UsbHid.getHidReporter();
 
-  HidEngine.setHidReporter(UsbHid.getHidReporter());
+  HidEngine.setHidReporter(hid_reporter);
   HidEngine.setKeymap(keymap);
-  HidEngine.begin();
+  HidEngine.start();
 
   vTaskStartScheduler();
 }

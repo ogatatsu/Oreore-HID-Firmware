@@ -21,13 +21,14 @@ void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
 void setup()
 {
   UsbHid.begin();
+  HidReporter *hid_reporter = UsbHid.getHidReporter();
 
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
-  HidEngine.setHidReporter(UsbHid.getHidReporter());
-  HidEngine.begin();
+  HidEngine.setHidReporter(hid_reporter);
+  HidEngine.start();
 
   pmw3360dm.setCallback(motion_callback);
-  pmw3360dm.begin();
+  pmw3360dm.start();
   pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
 
   vTaskStartScheduler();

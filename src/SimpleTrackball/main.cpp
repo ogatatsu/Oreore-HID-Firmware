@@ -52,17 +52,18 @@ void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
 
 void setup()
 {
-  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
   BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
   BleController.Periph.startConnection();
+  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
 
-  HidEngine.setHidReporter(BleController.Periph.getHidReporter());
+  HidEngine.setHidReporter(hid_reporter);
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
-  HidEngine.begin();
+  HidEngine.start();
 
   pmw3360dm.setCallback(motion_callback);
-  pmw3360dm.begin();
+  pmw3360dm.start();
   pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
 }
 

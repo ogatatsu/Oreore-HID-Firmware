@@ -1,7 +1,6 @@
 
 #include "Arduino.h"
 #include "BTTB179BleHost.h"
-#include "BlinkLed.h"
 #include "HidEngine.h"
 #include "Set.h"
 #include "UsbHid.h"
@@ -9,8 +8,6 @@
 #include "keymap.h"
 
 using namespace hidpg;
-
-BlinkLed scan_led(LED_BUILTIN, LOW);
 
 BTTB179BleHost bttb179;
 SemaphoreHandle_t mov_mutex;
@@ -53,8 +50,6 @@ void connect_callback(uint16_t conn_handle)
     conn->requestPairing();
 
     Serial.println("Ready to receive from peripheral");
-
-    scan_led.off();
   }
   else
   {
@@ -94,15 +89,13 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 
   Serial.print("Disconnected, reason = 0x");
   Serial.println(reason, HEX);
-
-  scan_led.blink();
 }
 
 void trackball_report_callback(bttb179_trackball_report_t *report)
 {
   // Serial.printf("[Trackball] buttons = %2d, x = %4d, y = %4d, wheel = %2d, pan = %2d\n", report->buttons, report->x, report->y, report->wheel, report->pan);
 
-  // button
+  // buttons
   ids.update(0, bitRead(report->buttons, 0)); // left button
   ids.update(1, bitRead(report->buttons, 1)); // right button
   ids.update(2, bitRead(report->buttons, 2)); // middle button
@@ -185,8 +178,6 @@ void setup()
   mov_mutex = xSemaphoreCreateMutex();
   whl_mutex = xSemaphoreCreateMutex();
 
-  scan_led.begin();
-
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
   Bluefruit.setName("BTTB179 Custom");
@@ -198,15 +189,16 @@ void setup()
 
   // Init Usb HID
   UsbHid.begin();
+  HidReporter *hid_reporter = UsbHid.getHidReporter();
 
   // Init HidEngine
-  HidEngine.setHidReporter(UsbHid.getHidReporter());
+  HidEngine.setHidReporter(hid_reporter);
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
   HidEngine.setTrackMap(trackMap);
-  HidEngine.begin();
+  HidEngine.start();
 
   // Callbacks for Central
   Bluefruit.Central.setConnectCallback(connect_callback);
@@ -220,7 +212,6 @@ void setup()
   Bluefruit.Scanner.filterService(bttb179); // only report HID service
   Bluefruit.Scanner.useActiveScan(false);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
-  scan_led.blink();           // scan status led
 
   suspendLoop();
 }

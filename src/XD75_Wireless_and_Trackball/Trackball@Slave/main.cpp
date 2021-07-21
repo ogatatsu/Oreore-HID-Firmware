@@ -64,14 +64,14 @@ void motion_callback()
 
 void setup()
 {
-  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
-  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
   BleControllerSlave.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
+  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
   BleControllerSlave.startConnection();
 
   pmw3360dm.setCallback(motion_callback);
-  pmw3360dm.begin();
+  pmw3360dm.start();
   pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
 }
 

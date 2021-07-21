@@ -1,6 +1,5 @@
 
 #include "Arduino.h"
-#include "BlinkLed.h"
 #include "DebounceIn.h"
 #include "HidEngine.h"
 #include "Set.h"
@@ -10,8 +9,6 @@
 #include "keymap.h"
 
 using namespace hidpg;
-
-BlinkLed scan_led(LED_BUILTIN, LOW);
 
 TPKBD2BleHost tpkbd2;
 SemaphoreHandle_t mov_mutex;
@@ -59,8 +56,6 @@ void connect_callback(uint16_t conn_handle)
     conn->requestPairing();
 
     Serial.println("Ready to receive from peripheral");
-
-    scan_led.off();
   }
   else
   {
@@ -102,16 +97,14 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 
   Serial.print("Disconnected, reason = 0x");
   Serial.println(reason, HEX);
-
-  scan_led.blink();
 }
 
 void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
 {
   // Serial.print("[keyboard] keycode = ");
   // Serial.printBuffer(report->keycode, 6);
-  // Serial.print(" : modifier = ");
-  // Serial.println(report->modifier, BIN);
+  // Serial.print(" : modifiers = ");
+  // Serial.println(report->modifiers, BIN);
 
   // 偶にkeycodeに全部1が入ったreportが送られてくる、邪魔なのでフィルタする
   if (report->keycode[0] == 1 &&
@@ -133,13 +126,13 @@ void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
       key6_ids.add(report->keycode[i]);
     }
   }
-  other_ids.update(200, bitRead(report->modifier, 0)); // left ctrl
-  other_ids.update(201, bitRead(report->modifier, 1)); // left shift
-  other_ids.update(202, bitRead(report->modifier, 2)); // left alt
-  other_ids.update(203, bitRead(report->modifier, 3)); // left gui
-  other_ids.update(204, bitRead(report->modifier, 4)); // right ctrl
-  other_ids.update(205, bitRead(report->modifier, 5)); // right shift
-  other_ids.update(206, bitRead(report->modifier, 6)); // right alt
+  other_ids.update(200, bitRead(report->modifiers, 0)); // left ctrl
+  other_ids.update(201, bitRead(report->modifiers, 1)); // left shift
+  other_ids.update(202, bitRead(report->modifiers, 2)); // left alt
+  other_ids.update(203, bitRead(report->modifiers, 3)); // left gui
+  other_ids.update(204, bitRead(report->modifiers, 4)); // right ctrl
+  other_ids.update(205, bitRead(report->modifiers, 5)); // right shift
+  other_ids.update(206, bitRead(report->modifiers, 6)); // right alt
   // このキーボードに right gui は付いて無い
 
   HidEngine.applyToKeymap(key6_ids | other_ids);
@@ -150,7 +143,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
 {
   // Serial.printf("[Trackpoint] buttons = %2d, x = %4d, y = %4d, wheel = %2d\n", report->buttons, report->x, report->y, report->wheel);
 
-  // mouse button
+  // mouse buttons
   xSemaphoreTake(btn_mutex, portMAX_DELAY);
   other_ids.update(0, bitRead(report->buttons, 0)); // left button
   other_ids.update(1, bitRead(report->buttons, 1)); // right button
@@ -245,9 +238,7 @@ void setup()
   whl_mutex = xSemaphoreCreateMutexStatic(&whl_mutex_buffer);
   btn_mutex = xSemaphoreCreateMutexStatic(&btn_mutex_buffer);
 
-  ScrollOrTap::init();
-
-  scan_led.begin();
+  ScrollOrTap::begin();
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
@@ -262,22 +253,23 @@ void setup()
 
   // Init Usb HID
   UsbHid.begin();
+  HidReporter *hid_reporter = UsbHid.getHidReporter();
 
   // Init Dongle Button
   DebounceIn.addPin(PIN_BUTTON1, INPUT_PULLUP, 10);
   DebounceIn.setCallback(debounce_in_callback);
-  DebounceIn.begin();
+  DebounceIn.start();
 
   // Init HidEngine
   Layer.setCallback(layer_change_state_callback);
-  HidEngine.setHidReporter(UsbHid.getHidReporter());
+  HidEngine.setHidReporter(hid_reporter);
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
   HidEngine.setTrackMap(trackMap);
   HidEngine.setSimulKeymap(simulKeymap);
-  HidEngine.begin();
+  HidEngine.start();
 
   // Callbacks for Central
   Bluefruit.Central.setConnectCallback(connect_callback);
@@ -290,7 +282,6 @@ void setup()
   Bluefruit.Scanner.setInterval(160, 80); // in unit of 0.625 ms
   Bluefruit.Scanner.useActiveScan(true);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
-  scan_led.blink();           // scan status led
 
   suspendLoop();
 }

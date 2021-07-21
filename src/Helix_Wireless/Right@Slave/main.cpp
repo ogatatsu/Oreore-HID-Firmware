@@ -59,15 +59,15 @@ void matrix_scan_callback(const Set &ids)
 
 void setup()
 {
-  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
-  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
   BleControllerSlave.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
+  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
   BleControllerSlave.startConnection();
 
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
-  MatrixScan.begin();
+  MatrixScan.start();
 }
 
 // 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
