@@ -77,7 +77,7 @@ bool TPKBD2BleHost::discover(uint16_t conn_handle)
   // Discover all characteristics
   Bluefruit.Discovery.discoverCharacteristic(conn_handle, _keyboard_input, _trackpoint_input, _consumer_input);
 
-  VERIFY(_keyboard_input.discovered() && _trackpoint_input.discovered(), _consumer_input.discovered());
+  VERIFY(_keyboard_input.discovered() && _trackpoint_input.discovered() && _consumer_input.discovered());
 
   _conn_hdl = conn_handle;
   return true;
