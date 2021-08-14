@@ -145,10 +145,15 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
 
   // mouse buttons
   xSemaphoreTake(btn_mutex, portMAX_DELAY);
-  other_ids.update(0, bitRead(report->buttons, 0)); // left button
-  other_ids.update(1, bitRead(report->buttons, 1)); // right button
-  other_ids.update(2, bitRead(report->buttons, 2)); // middle button
-  HidEngine.applyToKeymap(key6_ids | other_ids);
+  bool is_update = false;
+  is_update |= other_ids.update(0, bitRead(report->buttons, 0)); // left button
+  is_update |= other_ids.update(1, bitRead(report->buttons, 1)); // right button
+  is_update |= other_ids.update(2, bitRead(report->buttons, 2)); // middle button
+  // トラックポイントを動かすたびにapplyToKeymapを呼び出すのを防ぐ
+  if (is_update)
+  {
+    HidEngine.applyToKeymap(key6_ids | other_ids);
+  }
   xSemaphoreGive(btn_mutex);
 
   // mouse move
@@ -283,7 +288,8 @@ void setup()
   Bluefruit.Scanner.useActiveScan(true);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
 
-  suspendLoop();
+  vTaskDelete(xTaskGetCurrentTaskHandle());
+  // suspendLoop();
 }
 
 void loop()

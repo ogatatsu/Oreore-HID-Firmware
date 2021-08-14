@@ -213,7 +213,8 @@ void setup()
   Bluefruit.Scanner.useActiveScan(false);
   Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
 
-  suspendLoop();
+  vTaskDelete(xTaskGetCurrentTaskHandle());
+  // suspendLoop();
 }
 
 void loop()

@@ -3,6 +3,7 @@
 #include "HidCore.h"
 #include "HidEngine.h"
 #include "KC.h"
+#include "UsbCommand.h"
 
 using namespace hidpg;
 
@@ -110,7 +111,7 @@ Key keymap[] = {
   { 38 /* 9             */, NK(_9) },
   { 39 /* 0             */, NK(_0) },
   { 40 /* Enter         */, NK(Enter) },
-  { 41 /* Escape        */, MLT({ TRC(2), RD_CLK() }) },
+  { 41 /* Escape        */, NK(Escape) },
   { 42 /* Backspace     */, NK(Backspace) },
   { 43 /* Tab           */, NK(Tab) },
   { 44 /* Space         */, LY1({ NK(Space), CC(PlayPause) }) },
@@ -121,9 +122,9 @@ Key keymap[] = {
   { 50 /* ]             */, NK(NonUsNumberSign) },
   { 51 /* ;             */, LY({ NK(Semicolon), NK(PageDown) }) },
   { 52 /* :             */, NK(Quote) },
-  { 53 /* Han/Zen       */, TRC(2) },
-  { 54 /* ,             */, LY1({ NK(Comma), CC(Rewind) }) },
-  { 55 /* .             */, LY1({ NK(Period), CC(FastForward) }) },
+  { 53 /* Han/Zen       */, NK(Grave) },
+  { 54 /* ,             */, NK(Comma) },
+  { 55 /* .             */, NK(Period) },
   { 56 /* /             */, NK(Slash) },
   { 57 /* CapsLock      */, TD({ { NK(Escape), MO(Ctrl) },
                                  { TAP(MO(Ctrl), 2), MO(Ctrl + Shift) } }) },
@@ -144,7 +145,7 @@ Key keymap[] = {
   { 73 /* Insert        */, NK(Insert) },
   { 74 /* Home          */, NK(Home) },
   { 75 /* PgUp          */, NK(PageUp) },
-  { 76 /* Delete        */, LY({ NK(Delete), SC(SystemSleep) }) },
+  { 76 /* Delete        */, LY({ NK(Delete), MLT({ SC(SystemSleep), WAKE_UP() }) }) },
   { 77 /* End           */, NK(End) },
   { 78 /* PgDn          */, NK(PageDown) },
   { 79 /* ArrowRight    */, NK(ArrowRight) },
@@ -165,7 +166,7 @@ Key keymap[] = {
                                  { MS_CLK(BackwardButton), MLT({ SL(2), TRC(1) }) } },
                                true) },
 
-  { 200 /* LeftCtrl     */, MLT({ SL1(1), TRC(3) }) },
+  { 200 /* LeftCtrl     */, MLT({ SL1(1), TRC(2) }) },
   { 201 /* LeftShift    */, TD({ { MO(Shift), MO(Shift) },
                                  { CK(Shift, CapsLock), CK(Shift, CapsLock) } }) },
   { 202 /* LeftAlt      */, TD({ { MO(Alt), MO(Alt) },
@@ -188,8 +189,7 @@ Encoder encoderMap[] = {
 Track trackMap[] = {
   { 0, 100, AngleSnap::Enable, _______, _______, NK(Backspace), NK(Delete) },
   { 1, 100, AngleSnap::Enable, NK(ArrowUp), NK(ArrowDown), NK(ArrowLeft), NK(ArrowRight) },
-  { 2, 1, AngleSnap::Enable, RD_ROT(-1), RD_ROT(1), RD_ROT(-1), RD_ROT(1) },
-  { 3, 100, AngleSnap::Enable, CC(VolumeUp), CC(VolumeDown), _______, _______ }
+  { 2, 100, AngleSnap::Enable, CC(VolumeUp), CC(VolumeDown), _______, _______ }
 };
 
 SimulKey simulKeymap[] = {
