@@ -1,5 +1,5 @@
-#include "BleCommand.h"
-#include "HidEngine.h"
+#include "BleCommandDsl.h"
+#include "CommandDsl.h"
 #include "KC.h"
 
 using namespace hidpg;

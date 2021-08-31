@@ -18,26 +18,9 @@ static constexpr uint8_t in_pins[] = { IN0, IN1, IN2, IN3 };
 constexpr uint8_t outLength = sizeof(out_pins) / sizeof(out_pins[0]);
 constexpr uint8_t inLength = sizeof(in_pins) / sizeof(in_pins[0]);
 
-// スイッチとマトリックスの定義
-// IN0
-static Switch sw10(10); //sw*
-static Switch sw11(11); //sw0
-static Switch sw12(12); //sw#
-// IN1
-static Switch sw7(7);
-static Switch sw8(8);
-static Switch sw9(9);
-// IN2
-static Switch sw4(4);
-static Switch sw5(5);
-static Switch sw6(6);
-// IN3
-static Switch sw1(1);
-static Switch sw2(2);
-static Switch sw3(3);
-
+// マトリックスの定義
 static Switch *matrix[outLength][inLength] = {
-  { &sw10, &sw7, &sw4, &sw1 },
-  { &sw11, &sw8, &sw5, &sw2 },
-  { &sw12, &sw9, &sw6, &sw3 },
+  { SW(10), SW(7), SW(4), SW(1) },
+  { SW(11), SW(8), SW(5), SW(2) },
+  { SW(12), SW(9), SW(6), SW(3) },
 };

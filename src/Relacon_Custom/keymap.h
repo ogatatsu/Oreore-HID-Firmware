@@ -1,6 +1,5 @@
 
-#include "HidCore.h"
-#include "HidEngine.h"
+#include "CommandDsl.h"
 #include "KC.h"
 
 using namespace hidpg;

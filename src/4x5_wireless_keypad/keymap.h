@@ -10,9 +10,8 @@
    * |  20  |  19  |  18  |  17  |  16  |
    * `----------------------------------.
    */
-
-#include "BleCommand.h"
-#include "HidEngine.h"
+#include "BleCommandDsl.h"
+#include "CommandDsl.h"
 #include "KC.h"
 
 using namespace hidpg;

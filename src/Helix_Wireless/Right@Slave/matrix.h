@@ -23,51 +23,11 @@ constexpr uint8_t in_pins[] = { IN0, IN1, IN2, IN3, IN4, IN5, IN6 };
 constexpr uint8_t out_len = sizeof(out_pins) / sizeof(out_pins[0]);
 constexpr uint8_t in_len = sizeof(in_pins) / sizeof(in_pins[0]);
 
-// スイッチとマトリックスの定義
-// IN0
-Switch sw1(12);
-Switch sw7(24);
-Switch sw13(36);
-Switch sw19(50);
-Switch sw26(64);
-// IN1
-Switch sw2(11);
-Switch sw8(23);
-Switch sw14(35);
-Switch sw20(49);
-Switch sw27(63);
-// IN2
-Switch sw3(10);
-Switch sw9(22);
-Switch sw15(34);
-Switch sw21(48);
-Switch sw28(62);
-// IN3
-Switch sw4(9);
-Switch sw10(21);
-Switch sw16(33);
-Switch sw22(47);
-Switch sw29(61);
-// IN4
-Switch sw5(8);
-Switch sw11(20);
-Switch sw17(32);
-Switch sw23(46);
-Switch sw30(60);
-// IN5
-Switch sw6(7);
-Switch sw12(19);
-Switch sw18(31);
-Switch sw24(45);
-Switch sw31(59);
-// IN6
-Switch sw25(44);
-Switch sw32(58);
-
+// マトリックスの定義
 Switch *matrix[out_len][in_len] = {
-  { &sw1, &sw2, &sw3, &sw4, &sw5, &sw6, nullptr },
-  { &sw7, &sw8, &sw9, &sw10, &sw11, &sw12, nullptr },
-  { &sw13, &sw14, &sw15, &sw16, &sw17, &sw18, nullptr },
-  { &sw19, &sw20, &sw21, &sw22, &sw23, &sw24, &sw25 },
-  { &sw26, &sw27, &sw28, &sw29, &sw30, &sw31, &sw32 },
+  { SW(1), SW(2), SW(3), SW(4), SW(5), SW(6), nullptr },
+  { SW(7), SW(8), SW(9), SW(10), SW(11), SW(12), nullptr },
+  { SW(13), SW(14), SW(15), SW(16), SW(17), SW(18), nullptr },
+  { SW(19), SW(20), SW(21), SW(22), SW(23), SW(24), SW(25) },
+  { SW(26), SW(27), SW(28), SW(29), SW(30), SW(31), SW(32) },
 };
