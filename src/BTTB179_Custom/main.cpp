@@ -144,27 +144,27 @@ void trackball_report_callback(bttb179_trackball_report_t *report)
   }
 }
 
-void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
 {
   xSemaphoreTake(mov_mutex, portMAX_DELAY);
-  *delta_x = delta_x_sum;
-  *delta_y = delta_y_sum;
+  delta_x = delta_x_sum;
+  delta_y = delta_y_sum;
   delta_x_sum = delta_y_sum = 0;
   is_mouse_move_called = false;
   xSemaphoreGive(mov_mutex);
 }
 
-void read_encoder_step_callback(uint8_t encoder_id, int32_t *step)
+void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
 {
   xSemaphoreTake(whl_mutex, portMAX_DELAY);
   if (encoder_id == 0)
   {
-    *step = wheel_sum;
+    step = wheel_sum;
     wheel_sum = 0;
   }
   else if (encoder_id == 1)
   {
-    *step = pan_sum;
+    step = pan_sum;
     pan_sum = 0;
   }
   is_rotate_encoder_called = false;

@@ -2,6 +2,7 @@
 #include "CommandDsl.h"
 #include "CommandTapper.h"
 #include "HidCore.h"
+#include "HidEngine.h"
 #include "KC.h"
 #include "UsbCommandDsl.h"
 
@@ -223,8 +224,8 @@ void process_f13_f14_according_to_layer_change(layer_bitmap_t prev_state, layer_
     // F14を解除
     Hid.unsetKey(F14);
 
-    // Layer1がonだったらF13を入力
-    if (bitRead(state, 1) == 1)
+    // 1がonだったらF13を入力
+    if (bitRead(state, 1) == 1 && f13_state == false)
     {
       Hid.setKey(F13);
       f13_state = true;
@@ -234,8 +235,8 @@ void process_f13_f14_according_to_layer_change(layer_bitmap_t prev_state, layer_
 
   if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // 1がon
   {
-    // Layer2がoffだったらF13を入力
-    if (bitRead(state, 2) == 0)
+    // 2がoffだったらF13を入力
+    if (bitRead(state, 2) == 0 && f13_state == false)
     {
       Hid.setKey(F13);
       Hid.sendKeyReport(false);
@@ -256,26 +257,33 @@ void process_f13_f14_according_to_layer_change(layer_bitmap_t prev_state, layer_
 
 void process_trc_according_to_layer_change(layer_bitmap_t prev_state, layer_bitmap_t state)
 {
-  static Command *trc_del = TRC(TRACK_ID_DELETE);
-  static Command *trc_arrow = TRC(TRACK_ID_ARROW);
+  static TrackID trc_del(TRACK_ID_DELETE);
+  static TrackID trc_arrow(TRACK_ID_ARROW);
 
   static bool trc_del_state = false;
 
   if (bitRead(prev_state, 2) == 0 && bitRead(state, 2) == 1) // 2がon
   {
-    trc_arrow->press();
+    HidEngine.startTracking(trc_arrow);
   }
   else if (bitRead(prev_state, 2) == 1 && bitRead(state, 2) == 0) // 2がoff
   {
-    trc_arrow->release();
+    HidEngine.stopTracking(trc_arrow);
+
+    // 1がonだったらtrc_delをON
+    if (bitRead(state, 1) == 1 && trc_del_state == false)
+    {
+      HidEngine.startTracking(trc_del);
+      trc_del_state = true;
+    }
   }
 
   if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // 1がon
   {
     // Layer2がoffだったらtrc_delをON
-    if (bitRead(state, 2) == 0)
+    if (bitRead(state, 2) == 0 && trc_del_state == false)
     {
-      trc_del->press();
+      HidEngine.startTracking(trc_del);
       trc_del_state = true;
     }
   }
@@ -284,7 +292,7 @@ void process_trc_according_to_layer_change(layer_bitmap_t prev_state, layer_bitm
     // trc_delがONの場合解除する
     if (trc_del_state == true)
     {
-      trc_del->release();
+      HidEngine.stopTracking(trc_del);
       trc_del_state = false;
     }
   }

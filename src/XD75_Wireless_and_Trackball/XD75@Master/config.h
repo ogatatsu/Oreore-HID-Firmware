@@ -27,3 +27,5 @@
 #define MAX_BATTERY_VOLTAGE 3.0
 // 電池の最小電圧
 #define MIN_BATTERY_VOLTAGE 2.0
+// 電池の電圧を読み取る間隔
+#define READ_BATTERY_VOLTAGE_INTERVAL_MS 60000

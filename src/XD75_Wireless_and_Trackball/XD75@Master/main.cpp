@@ -46,7 +46,7 @@ void prph_cannot_connect_callback()
   BleController.Central.sendData(0, &data, 1);
   delay(1000);
 
-  MatrixScan.stopTask_and_setWakeUpInterrupt();
+  MatrixScan.stop_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
@@ -76,11 +76,11 @@ void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
   xSemaphoreGive(mutex);
 }
 
-void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
 {
   xSemaphoreTake(mutex, portMAX_DELAY);
-  *delta_x = delta_x_sum;
-  *delta_y = delta_y_sum;
+  delta_x = delta_x_sum;
+  delta_y = delta_y_sum;
   delta_x_sum = delta_y_sum = 0;
   is_mouse_move_called = false;
   xSemaphoreGive(mutex);
@@ -110,8 +110,8 @@ void setup()
 }
 
 // 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
-#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
-#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+constexpr long MIN_ANALOG_VALUE = (MIN_BATTERY_VOLTAGE / 3.6 * 1023);
+constexpr long MAX_ANALOG_VALUE = (MAX_BATTERY_VOLTAGE / 3.6 * 1023);
 
 uint8_t readBatteryLevel()
 {
@@ -126,5 +126,5 @@ uint8_t readBatteryLevel()
 void loop()
 {
   BleController.Periph.setBatteryLevel(readBatteryLevel());
-  delay(60000); //1 minites
+  delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

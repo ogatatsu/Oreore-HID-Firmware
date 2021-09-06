@@ -43,7 +43,7 @@ void prph_cannot_connect_callback()
   delay(1000);
 
   BleController.Central.stopConnection();
-  MatrixScan.stopTask_and_setWakeUpInterrupt();
+  MatrixScan.stop_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
@@ -98,8 +98,8 @@ void setup()
 }
 
 // 1/6 gain (GND ~ 3.6V) and 10bit (0 ~ 1023)
-#define MIN_ANALOG_VALUE (MIN_BATTERY_VOLTAGE / 3.6 * 1023)
-#define MAX_ANALOG_VALUE (MAX_BATTERY_VOLTAGE / 3.6 * 1023)
+constexpr long MIN_ANALOG_VALUE = (MIN_BATTERY_VOLTAGE / 3.6 * 1023);
+constexpr long MAX_ANALOG_VALUE = (MAX_BATTERY_VOLTAGE / 3.6 * 1023);
 
 uint8_t readBatteryLevel()
 {
@@ -114,5 +114,5 @@ uint8_t readBatteryLevel()
 void loop()
 {
   BleController.Periph.setBatteryLevel(readBatteryLevel());
-  delay(60000); //1 minites
+  delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

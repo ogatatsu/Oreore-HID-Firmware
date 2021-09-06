@@ -213,22 +213,22 @@ void debounce_in_callback(uint8_t pin, bool state)
   }
 }
 
-void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
 {
   xSemaphoreTake(mov_mutex, portMAX_DELAY);
-  *delta_x = delta_x_sum;
-  *delta_y = delta_y_sum;
+  delta_x = delta_x_sum;
+  delta_y = delta_y_sum;
   delta_x_sum = delta_y_sum = 0;
   is_mouse_move_called = false;
   xSemaphoreGive(mov_mutex);
 }
 
-void read_encoder_step_callback(uint8_t encoder_id, int32_t *step)
+void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
 {
   if (encoder_id == ENCODER_ID)
   {
     xSemaphoreTake(whl_mutex, portMAX_DELAY);
-    *step = wheel_sum;
+    step = wheel_sum;
     wheel_sum = 0;
     is_rotate_encoder_called = false;
     xSemaphoreGive(whl_mutex);

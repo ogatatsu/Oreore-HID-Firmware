@@ -13,9 +13,9 @@ void motion_callback()
   HidEngine.mouseMove();
 }
 
-void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
+void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
 {
-  pmw3360dm.readDelta(delta_x, delta_y);
+  pmw3360dm.readDelta(&delta_x, &delta_y);
 }
 
 void setup()
