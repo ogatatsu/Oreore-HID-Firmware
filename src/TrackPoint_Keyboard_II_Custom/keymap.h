@@ -7,6 +7,11 @@
 
 using namespace hidpg;
 
+constexpr uint8_t ENCODER_ID = 0;
+constexpr uint8_t TRACK_ID_DELETE = 0;
+constexpr uint8_t TRACK_ID_ARROW = 1;
+constexpr uint8_t TRACK_ID_MEDIA = 2;
+
 //------------------------------------------------------------------+
 // CustomCommand
 //------------------------------------------------------------------+
@@ -159,14 +164,14 @@ Key keymap[] = {
                                  { CC(LaunchMail), CC(LaunchMail) },
                                  { CC(LaunchMedia), CC(LaunchMedia) } }) },
   { 137 /* \(BackSlash) */, NK(Int3) },
-  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ SL(1), TRC(0) }) },
-                                 { MS_CLK(ForwardButton), MLT({ SL(2), TRC(1) }) } },
+  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), SL(1) },
+                                 { MS_CLK(ForwardButton), SL(2) } },
                                true) },
-  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ SL(1), TRC(0) }) },
-                                 { MS_CLK(BackwardButton), MLT({ SL(2), TRC(1) }) } },
+  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), SL(1) },
+                                 { MS_CLK(BackwardButton), SL(2) } },
                                true) },
 
-  { 200 /* LeftCtrl     */, MLT({ SL1(1), TRC(2) }) },
+  { 200 /* LeftCtrl     */, MLT({ SL1(1), TRC(TRACK_ID_MEDIA) }) },
   { 201 /* LeftShift    */, TD({ { NOP(), MO(Shift) },
                                  { CK(Shift, CapsLock), CK(Shift, CapsLock) } }) },
   { 202 /* LeftAlt      */, TD({ { MO(Alt), MO(Alt) },
@@ -182,25 +187,27 @@ Key keymap[] = {
   { 255 /* Dongle Button */, NOP() },
 };
 
+SimulKey simulKeymap[] = {
+  { { 138, 139 } /* Henkan + Muhenkan */, SL(2) }
+};
+
 Encoder encoderMap[] = {
-  { 0, MS_SCR(-1, 0), MS_SCR(1, 0) },
+  // { id, counterclockwise_command, clockwise_command }
+  { ENCODER_ID, MS_SCR(-1, 0), MS_SCR(1, 0) },
 };
 
 Track trackMap[] = {
-  { 0, 100, AngleSnap::Enable, _______, _______, NK(Backspace), NK(Delete) },
-  { 1, 100, AngleSnap::Enable, NK(ArrowUp), NK(ArrowDown), NK(ArrowLeft), NK(ArrowRight) },
-  { 2, 100, AngleSnap::Enable, CC(VolumeUp), CC(VolumeDown), _______, _______ }
+  // { id, threshold_distance, angle_snap, up_command, down_command, left_command, right_command }
+  { TRACK_ID_DELETE, 100, AngleSnap::Enable, _______, _______, NK(Backspace), NK(Delete) },
+  { TRACK_ID_ARROW, 100, AngleSnap::Enable, NK(ArrowUp), NK(ArrowDown), NK(ArrowLeft), NK(ArrowRight) },
+  { TRACK_ID_MEDIA, 100, AngleSnap::Enable, CC(VolumeUp), CC(VolumeDown), _______, _______ }
 };
 
-SimulKey simulKeymap[] = {
-  { { 138, 139 }, MLT({ SL(2), TRC(1) }) }
-};
-
-void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state)
+void process_f13_f14_according_to_layer_change(layer_bitmap_t prev_state, layer_bitmap_t state)
 {
   static bool f13_state = false;
 
-  if (bitRead(prev_state, 2) == 0 && bitRead(state, 2) == 1) // Layer2がonになった
+  if (bitRead(prev_state, 2) == 0 && bitRead(state, 2) == 1) // 2がon
   {
     // F13が入力されている場合解除してからF14を入力
     if (f13_state == true)
@@ -211,7 +218,7 @@ void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state
     Hid.setKey(F14);
     Hid.sendKeyReport(false);
   }
-  else if (bitRead(prev_state, 2) == 1 && bitRead(state, 2) == 0) // Layer2がoffになった
+  else if (bitRead(prev_state, 2) == 1 && bitRead(state, 2) == 0) // 2がoff
   {
     // F14を解除
     Hid.unsetKey(F14);
@@ -225,7 +232,7 @@ void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state
     Hid.sendKeyReport(false);
   }
 
-  if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // Layer1がonになった
+  if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // 1がon
   {
     // Layer2がoffだったらF13を入力
     if (bitRead(state, 2) == 0)
@@ -235,7 +242,7 @@ void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state
       f13_state = true;
     }
   }
-  else if (bitRead(prev_state, 1) == 1 && bitRead(state, 1) == 0) // Layer1がoffになった
+  else if (bitRead(prev_state, 1) == 1 && bitRead(state, 1) == 0) // 1がoff
   {
     // F13が入力されている場合解除する
     if (f13_state == true)
@@ -245,4 +252,46 @@ void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state
       f13_state = false;
     }
   }
+}
+
+void process_trc_according_to_layer_change(layer_bitmap_t prev_state, layer_bitmap_t state)
+{
+  static Command *trc_del = TRC(TRACK_ID_DELETE);
+  static Command *trc_arrow = TRC(TRACK_ID_ARROW);
+
+  static bool trc_del_state = false;
+
+  if (bitRead(prev_state, 2) == 0 && bitRead(state, 2) == 1) // 2がon
+  {
+    trc_arrow->press();
+  }
+  else if (bitRead(prev_state, 2) == 1 && bitRead(state, 2) == 0) // 2がoff
+  {
+    trc_arrow->release();
+  }
+
+  if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // 1がon
+  {
+    // Layer2がoffだったらtrc_delをON
+    if (bitRead(state, 2) == 0)
+    {
+      trc_del->press();
+      trc_del_state = true;
+    }
+  }
+  else if (bitRead(prev_state, 1) == 1 && bitRead(state, 1) == 0) // 1がoff
+  {
+    // trc_delがONの場合解除する
+    if (trc_del_state == true)
+    {
+      trc_del->release();
+      trc_del_state = false;
+    }
+  }
+}
+
+void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state)
+{
+  process_f13_f14_according_to_layer_change(prev_state, state);
+  process_trc_according_to_layer_change(prev_state, state);
 }

@@ -179,7 +179,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
     wheel_sum += report->wheel;
     if (is_rotate_encoder_called == false)
     {
-      HidEngine.rotateEncoder(0);
+      HidEngine.rotateEncoder(ENCODER_ID);
       is_rotate_encoder_called = true;
     }
     xSemaphoreGive(whl_mutex);
@@ -225,7 +225,7 @@ void read_mouse_delta_callback(int16_t *delta_x, int16_t *delta_y)
 
 void read_encoder_step_callback(uint8_t encoder_id, int32_t *step)
 {
-  if (encoder_id == 0)
+  if (encoder_id == ENCODER_ID)
   {
     xSemaphoreTake(whl_mutex, portMAX_DELAY);
     *step = wheel_sum;
