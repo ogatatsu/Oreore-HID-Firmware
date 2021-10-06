@@ -173,7 +173,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
   // mouse wheel
   if (report->wheel != 0)
   {
-    ScrollOrTap::notifyScroll();
+    EncoderOrTap::notifyScroll();
 
     xSemaphoreTake(whl_mutex, portMAX_DELAY);
     wheel_sum += report->wheel;
@@ -243,7 +243,7 @@ void setup()
   whl_mutex = xSemaphoreCreateMutexStatic(&whl_mutex_buffer);
   btn_mutex = xSemaphoreCreateMutexStatic(&btn_mutex_buffer);
 
-  ScrollOrTap::begin();
+  EncoderOrTap::begin();
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);

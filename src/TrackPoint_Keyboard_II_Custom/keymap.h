@@ -9,18 +9,17 @@
 using namespace hidpg;
 
 constexpr uint8_t ENCODER_ID = 0;
-constexpr uint8_t TRACK_ID_DELETE = 0;
-constexpr uint8_t TRACK_ID_ARROW = 1;
-constexpr uint8_t TRACK_ID_MEDIA = 2;
+constexpr uint8_t TRACK_ID_NORMAL = 0;
+constexpr uint8_t TRACK_ID_MEDIA = 1;
 
 //------------------------------------------------------------------+
 // CustomCommand
 //------------------------------------------------------------------+
 
-class ScrollOrTap : public Command
+class EncoderOrTap : public Command
 {
 public:
-  ScrollOrTap(Command *tap_command) : _tap_command(tap_command)
+  EncoderOrTap(Command *tap_command) : _tap_command(tap_command)
   {
     _tap_command->setParent(this);
   }
@@ -60,11 +59,11 @@ private:
   static bool _isScroll;
 };
 
-bool ScrollOrTap::_isScroll = false;
-SemaphoreHandle_t ScrollOrTap::_mutex = nullptr;
-StaticSemaphore_t ScrollOrTap::_mutex_buffer;
+bool EncoderOrTap::_isScroll = false;
+SemaphoreHandle_t EncoderOrTap::_mutex = nullptr;
+StaticSemaphore_t EncoderOrTap::_mutex_buffer;
 
-ScrollOrTap ScrollOrMiddleButton(MS_CLK(MiddleButton));
+EncoderOrTap EncoderOrMiddleButton(MS_CLK(MiddleButton));
 
 //------------------------------------------------------------------+
 // Keymap
@@ -73,7 +72,7 @@ ScrollOrTap ScrollOrMiddleButton(MS_CLK(MiddleButton));
 Key keymap[] = {
   { 0 /*  LeftButton    */, MS_CLK(LeftButton) },
   { 1 /*  RightButton   */, MS_CLK(RightButton) },
-  { 2 /*  MiddleButton  */, &ScrollOrMiddleButton },
+  { 2 /*  MiddleButton  */, &EncoderOrMiddleButton },
 
   { 4 /*  a             */, NK(A) },
   { 5 /*  b             */, NK(B) },
@@ -165,11 +164,11 @@ Key keymap[] = {
                                  { CC(LaunchMail), CC(LaunchMail) },
                                  { CC(LaunchMedia), CC(LaunchMedia) } }) },
   { 137 /* \(BackSlash) */, NK(Int3) },
-  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), SL(1) },
-                                 { MS_CLK(ForwardButton), SL(2) } },
+  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ SL(1), TRC(TRACK_ID_NORMAL) }) },
+                                 { MS_CLK(ForwardButton), MLT({ SL(2), TRC(TRACK_ID_NORMAL) }) } },
                                true) },
-  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), SL(1) },
-                                 { MS_CLK(BackwardButton), SL(2) } },
+  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ SL(1), TRC(TRACK_ID_NORMAL) }) },
+                                 { MS_CLK(BackwardButton), MLT({ SL(2), TRC(TRACK_ID_NORMAL) }) } },
                                true) },
 
   { 200 /* LeftCtrl     */, MLT({ SL1(1), TRC(TRACK_ID_MEDIA) }) },
@@ -199,8 +198,7 @@ Encoder encoderMap[] = {
 
 Track trackMap[] = {
   // { id, threshold_distance, angle_snap, up_command, down_command, left_command, right_command }
-  { TRACK_ID_DELETE, 100, AngleSnap::Enable, _______, _______, NK(Backspace), NK(Delete) },
-  { TRACK_ID_ARROW, 100, AngleSnap::Enable, NK(ArrowUp), NK(ArrowDown), NK(ArrowLeft), NK(ArrowRight) },
+  { TRACK_ID_NORMAL, 100, AngleSnap::Enable, LY({ NOP(), NOP(), NK(ArrowUp) }), LY({ NOP(), NOP(), NK(ArrowDown) }), LY({ NOP(), NK(Backspace), NK(ArrowLeft) }), LY({ NOP(), NK(Delete), NK(ArrowRight) }) },
   { TRACK_ID_MEDIA, 100, AngleSnap::Enable, CC(VolumeUp), CC(VolumeDown), _______, _______ }
 };
 
@@ -255,51 +253,7 @@ void process_f13_f14_according_to_layer_change(layer_bitmap_t prev_state, layer_
   }
 }
 
-void process_trc_according_to_layer_change(layer_bitmap_t prev_state, layer_bitmap_t state)
-{
-  static TrackID trc_del(TRACK_ID_DELETE);
-  static TrackID trc_arrow(TRACK_ID_ARROW);
-
-  static bool trc_del_state = false;
-
-  if (bitRead(prev_state, 2) == 0 && bitRead(state, 2) == 1) // 2がon
-  {
-    HidEngine.startTracking(trc_arrow);
-  }
-  else if (bitRead(prev_state, 2) == 1 && bitRead(state, 2) == 0) // 2がoff
-  {
-    HidEngine.stopTracking(trc_arrow);
-
-    // 1がonだったらtrc_delをON
-    if (bitRead(state, 1) == 1 && trc_del_state == false)
-    {
-      HidEngine.startTracking(trc_del);
-      trc_del_state = true;
-    }
-  }
-
-  if (bitRead(prev_state, 1) == 0 && bitRead(state, 1) == 1) // 1がon
-  {
-    // Layer2がoffだったらtrc_delをON
-    if (bitRead(state, 2) == 0 && trc_del_state == false)
-    {
-      HidEngine.startTracking(trc_del);
-      trc_del_state = true;
-    }
-  }
-  else if (bitRead(prev_state, 1) == 1 && bitRead(state, 1) == 0) // 1がoff
-  {
-    // trc_delがONの場合解除する
-    if (trc_del_state == true)
-    {
-      HidEngine.stopTracking(trc_del);
-      trc_del_state = false;
-    }
-  }
-}
-
 void layer_change_state_callback(layer_bitmap_t prev_state, layer_bitmap_t state)
 {
   process_f13_f14_according_to_layer_change(prev_state, state);
-  process_trc_according_to_layer_change(prev_state, state);
 }
