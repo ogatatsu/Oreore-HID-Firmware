@@ -39,10 +39,6 @@ Key keymap[] = {
   { 20, SEQ_MODE() },
 };
 
-SimulKey simul_keymap[] = {
-  { { 3, 4, 5 }, ToH(NOP(), 2000, RESET()) },
-};
-
 SeqKey seq_keymap[] = {
   { { 5, 4 }, BT(1) },
   { { 5, 3 }, BT(2) },

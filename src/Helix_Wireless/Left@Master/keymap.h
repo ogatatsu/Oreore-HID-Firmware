@@ -133,7 +133,3 @@ Key keymap[] = {
   { 63, LY({ NK(ArrowUp), CC(VolumeDown), CC(VolumeDown) }) },
   { 64, LY({ NK(ArrowRight), CC(PlayPause), CC(PlayPause) }) },
 };
-
-SimulKey simul_keymap[] = {
-  { { 51, 56, 59 }, ToH(NOP(), 2000, RESET()) },
-};

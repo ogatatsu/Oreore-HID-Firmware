@@ -54,7 +54,6 @@ void setup()
   MatrixScan.start();
 
   HidEngine.setKeymap(keymap);
-  HidEngine.setSimulKeymap(simul_keymap);
   HidEngine.setSeqKeymap(seq_keymap);
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.start();

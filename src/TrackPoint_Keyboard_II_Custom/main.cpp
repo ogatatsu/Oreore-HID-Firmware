@@ -273,7 +273,6 @@ void setup()
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
   HidEngine.setTrackMap(trackMap);
-  HidEngine.setSimulKeymap(simulKeymap);
   HidEngine.start();
 
   // Callbacks for Central

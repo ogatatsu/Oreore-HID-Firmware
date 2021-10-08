@@ -115,7 +115,7 @@ Key keymap[] = {
   { 37 /* 8             */, NK(_8) },
   { 38 /* 9             */, NK(_9) },
   { 39 /* 0             */, NK(_0) },
-  { 40 /* Enter         */, NK(Enter) },
+  { 40 /* Enter         */, MLT({ NK(Enter), WAKE_UP() }) },
   { 41 /* Escape        */, NK(Escape) },
   { 42 /* Backspace     */, NK(Backspace) },
   { 43 /* Tab           */, NK(Tab) },
@@ -150,7 +150,7 @@ Key keymap[] = {
   { 73 /* Insert        */, NK(Insert) },
   { 74 /* Home          */, NK(Home) },
   { 75 /* PgUp          */, NK(PageUp) },
-  { 76 /* Delete        */, LY({ NK(Delete), MLT({ SC(SystemSleep), WAKE_UP() }) }) },
+  { 76 /* Delete        */, LY({ NK(Delete), SC(SystemSleep) }) },
   { 77 /* End           */, NK(End) },
   { 78 /* PgDn          */, NK(PageDown) },
   { 79 /* ArrowRight    */, NK(ArrowRight) },
@@ -164,10 +164,10 @@ Key keymap[] = {
                                  { CC(LaunchMail), CC(LaunchMail) },
                                  { CC(LaunchMedia), CC(LaunchMedia) } }) },
   { 137 /* \(BackSlash) */, NK(Int3) },
-  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ SL(1), TRC(TRACK_ID_NORMAL) }) },
+  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ UPL(1), TRC(TRACK_ID_NORMAL) }) },
                                  { MS_CLK(ForwardButton), MLT({ SL(2), TRC(TRACK_ID_NORMAL) }) } },
                                true) },
-  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ SL(1), TRC(TRACK_ID_NORMAL) }) },
+  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ UPL(1), TRC(TRACK_ID_NORMAL) }) },
                                  { MS_CLK(BackwardButton), MLT({ SL(2), TRC(TRACK_ID_NORMAL) }) } },
                                true) },
 
@@ -185,10 +185,6 @@ Key keymap[] = {
                                  { TAP(MO(RightAlt), 2), MO(RightAlt + Shift) } }) },
 
   { 255 /* Dongle Button */, NOP() },
-};
-
-SimulKey simulKeymap[] = {
-  { { 138, 139 } /* Henkan + Muhenkan */, SL(2) }
 };
 
 Encoder encoderMap[] = {
