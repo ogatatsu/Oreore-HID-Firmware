@@ -70,20 +70,23 @@ void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
   delta_y_sum += buf->delta_y;
   if (is_mouse_move_called == false)
   {
-    HidEngine.mouseMove();
+    HidEngine.mouseMove(MOUSE_ID);
     is_mouse_move_called = true;
   }
   xSemaphoreGive(mutex);
 }
 
-void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
+void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
 {
-  xSemaphoreTake(mutex, portMAX_DELAY);
-  delta_x = delta_x_sum;
-  delta_y = delta_y_sum;
-  delta_x_sum = delta_y_sum = 0;
-  is_mouse_move_called = false;
-  xSemaphoreGive(mutex);
+  if (mouse_id == MOUSE_ID)
+  {
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    delta_x = delta_x_sum;
+    delta_y = delta_y_sum;
+    delta_x_sum = delta_y_sum = 0;
+    is_mouse_move_called = false;
+    xSemaphoreGive(mutex);
+  }
 }
 
 void setup()
@@ -103,7 +106,7 @@ void setup()
   MatrixScan.start();
 
   HidEngine.setKeymap(keymap);
-  HidEngine.setTrackMap(trackmap);
+  HidEngine.setGestureMap(gestureMap);
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.start();

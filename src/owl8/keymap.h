@@ -28,7 +28,7 @@ Key keymap[] = {
 };
 
 Encoder encoderMap[] = {
-  // { id, counterclockwise_command, clockwise_command }
+  // { encoder_id, counterclockwise_command, clockwise_command }
   { ENCODER_LEFT_ID, CC(VolumeDown), CC(VolumeUp) },
   { ENCODER_RIGHT_ID, MS_SCR(1, 0), MS_SCR(-1, 0) },
 };

@@ -30,6 +30,8 @@
 
 using namespace hidpg;
 
+constexpr uint8_t MOUSE_ID = 0;
+
 PMW3360DM pmw3360dm = PMW3360DM::create<0>(ThreadSafeSPI, PMW3360DM_NCS_PIN, PMW3360DM_INTERRUPT_PIN);
 
 void cannot_connect_callback()
@@ -40,14 +42,17 @@ void cannot_connect_callback()
 
 void motion_callback()
 {
-  HidEngine.mouseMove();
+  HidEngine.mouseMove(MOUSE_ID);
 }
 
-void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
+void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
 {
-  pmw3360dm.readDelta(&delta_x, &delta_y);
-  // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
-  delta_x *= -1;
+  if (mouse_id == MOUSE_ID)
+  {
+    pmw3360dm.readDelta(&delta_x, &delta_y);
+    // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
+    delta_x *= -1;
+  }
 }
 
 void setup()

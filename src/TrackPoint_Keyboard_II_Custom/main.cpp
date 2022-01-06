@@ -164,7 +164,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
     delta_y_sum += report->y;
     if (is_mouse_move_called == false)
     {
-      HidEngine.mouseMove();
+      HidEngine.mouseMove(MOUSE_ID);
       is_mouse_move_called = true;
     }
     xSemaphoreGive(mov_mutex);
@@ -213,14 +213,17 @@ void debounce_in_callback(uint8_t pin, bool state)
   }
 }
 
-void read_mouse_delta_callback(int16_t &delta_x, int16_t &delta_y)
+void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
 {
-  xSemaphoreTake(mov_mutex, portMAX_DELAY);
-  delta_x = delta_x_sum;
-  delta_y = delta_y_sum;
-  delta_x_sum = delta_y_sum = 0;
-  is_mouse_move_called = false;
-  xSemaphoreGive(mov_mutex);
+  if (mouse_id == MOUSE_ID)
+  {
+    xSemaphoreTake(mov_mutex, portMAX_DELAY);
+    delta_x = delta_x_sum;
+    delta_y = delta_y_sum;
+    delta_x_sum = delta_y_sum = 0;
+    is_mouse_move_called = false;
+    xSemaphoreGive(mov_mutex);
+  }
 }
 
 void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
@@ -266,13 +269,12 @@ void setup()
   DebounceIn.start();
 
   // Init HidEngine
-  Layer.setCallback(layer_change_state_callback);
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
+  HidEngine.setGestureMap(gestureMap);
   HidEngine.setEncoderMap(encoderMap);
-  HidEngine.setTrackMap(trackMap);
   HidEngine.start();
 
   // Callbacks for Central
