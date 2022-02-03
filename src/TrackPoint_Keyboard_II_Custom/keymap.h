@@ -11,35 +11,51 @@ using namespace hidpg;
 constexpr uint8_t MOUSE_ID = 0;
 constexpr uint8_t GESTURE_ID_TAB = 0;
 constexpr uint8_t GESTURE_ID_ARROW = 1;
-constexpr uint8_t GESTURE_ID_LIGHT = 2;
+constexpr uint8_t GESTURE_ID_DESKTOP = 2;
 constexpr uint8_t ENCODER_ID = 0;
 
 //------------------------------------------------------------------+
 // CustomCommand
 //------------------------------------------------------------------+
 
-class EncoderOrTap : public Command
+class EncoderAndLayer1OrTap : public Command, public BdrcpEventListener
 {
 public:
-  EncoderOrTap(Command *tap_command) : _tap_command(tap_command)
+  EncoderAndLayer1OrTap(Command *tap_command)
+      : BdrcpEventListener(this), _tap_command(tap_command), _hasDifferentCommandPressed(false)
   {
     _tap_command->setParent(this);
   }
 
+  void onPress(uint8_t n_times) override
+  {
+    Layer1.on(1);
+    startListen_BeforeDifferentRootCommandPress();
+    _hasDifferentCommandPressed = false;
+  }
+
   uint8_t onRelease() override
   {
+    Layer1.off(1);
+    stopListen_BeforeDifferentRootCommandPress();
+
     xSemaphoreTake(_mutex, portMAX_DELAY);
-    if (_isScroll == false)
+    if (_hasScrolled == false && _hasDifferentCommandPressed == false)
     {
       CommandTapper.tap(_tap_command);
     }
     else
     {
-      _isScroll = false;
+      _hasScrolled = false;
     }
     xSemaphoreGive(_mutex);
 
     return 1;
+  }
+
+  void onBeforeDifferentRootCommandPress()
+  {
+    _hasDifferentCommandPressed = true;
   }
 
   static void begin()
@@ -50,31 +66,33 @@ public:
   static void notifyScroll()
   {
     xSemaphoreTake(_mutex, portMAX_DELAY);
-    _isScroll = true;
+    _hasScrolled = true;
     xSemaphoreGive(_mutex);
   }
 
 private:
   Command *_tap_command;
+  bool _hasDifferentCommandPressed;
   static SemaphoreHandle_t _mutex;
   static StaticSemaphore_t _mutex_buffer;
-  static bool _isScroll;
+  static bool _hasScrolled;
 };
 
-bool EncoderOrTap::_isScroll = false;
-SemaphoreHandle_t EncoderOrTap::_mutex = nullptr;
-StaticSemaphore_t EncoderOrTap::_mutex_buffer;
+bool EncoderAndLayer1OrTap::_hasScrolled = false;
+SemaphoreHandle_t EncoderAndLayer1OrTap::_mutex = nullptr;
+StaticSemaphore_t EncoderAndLayer1OrTap::_mutex_buffer;
 
-EncoderOrTap EncoderOrMiddleButton(MS_CLK(MiddleButton));
+EncoderAndLayer1OrTap EncoderAndLayer1OrMiddleButton_(MS_CLK(MiddleButton));
+Command *EncoderAndLayer1OrMiddleButton = &EncoderAndLayer1OrMiddleButton_;
 
 //------------------------------------------------------------------+
 // Keymap
 //------------------------------------------------------------------+
 
 Key keymap[] = {
-  { 0 /*  LeftButton    */, MS_CLK(LeftButton) },
-  { 1 /*  RightButton   */, MS_CLK(RightButton) },
-  { 2 /*  MiddleButton  */, &EncoderOrMiddleButton },
+  { 0 /*  LeftButton    */, LY({ MS_CLK(LeftButton), MS_CLK(BackwardButton) }) },
+  { 1 /*  RightButton   */, LY({ MS_CLK(RightButton), MS_CLK(ForwardButton) }) },
+  { 2 /*  MiddleButton  */, EncoderAndLayer1OrMiddleButton },
 
   { 4 /*  a             */, NK(A) },
   { 5 /*  b             */, NK(B) },
@@ -83,20 +101,15 @@ Key keymap[] = {
   { 8 /*  e             */, NK(E) },
   { 9 /*  f             */, NK(F) },
   { 10 /* g             */, NK(G) },
-  { 11 /* h             */, LY1({ LY({ NK(H), NK(ArrowLeft) }),
-                                  CC(PrevTrack) }) },
+  { 11 /* h             */, LY1({ LY({ NK(H), NK(Left) }), CC(PrevTrack) }) },
   { 12 /* i             */, LY({ NK(I), NK(Backspace) }) },
-  { 13 /* j             */, LY1({ LY({ NK(J), NK(ArrowDown) }),
-                                  CC(VolumeDown) }) },
-  { 14 /* k             */, LY1({ LY({ NK(K), NK(ArrowUp) }),
-                                  CC(VolumeUp) }) },
-  { 15 /* l             */, LY1({ LY({ NK(L), NK(ArrowRight) }),
-                                  CC(NextTrack) }) },
-  { 16 /* m             */, LY1({ LY({ NK(M), NK(Application) }),
-                                  CC(Mute) }) },
+  { 13 /* j             */, LY1({ LY({ NK(J), NK(Down) }), CC(VolumeDown) }) },
+  { 14 /* k             */, LY1({ LY({ NK(K), NK(Up) }), CC(VolumeUp) }) },
+  { 15 /* l             */, LY1({ LY({ NK(L), NK(Right) }), CC(NextTrack) }) },
+  { 16 /* m             */, LY1({ LY({ NK(M), NK(Application) }), CC(Mute) }) },
   { 17 /* n             */, NK(N) },
   { 18 /* o             */, LY({ NK(O), NK(Delete) }) },
-  { 19 /* p             */, LY({ NK(P), NK(PageUp) }) },
+  { 19 /* p             */, LY1({ LY({ NK(P), NK(PageUp) }), CC(LightUp) }) },
   { 20 /* q             */, NK(Q) },
   { 21 /* r             */, NK(R) },
   { 22 /* s             */, NK(S) },
@@ -124,10 +137,10 @@ Key keymap[] = {
   { 44 /* Space         */, LY1({ LY({ NK(Space), NK(Enter) }), CC(PlayPause) }) },
   { 45 /* -             */, LY({ NK(Minus), NK(F11) }) },
   { 46 /* ^             */, LY({ NK(Equal), NK(F12) }) },
-  { 47 /* @             */, NK(BracketLeft) },
-  { 48 /* [             */, NK(BracketRight) },
+  { 47 /* @             */, NK(LeftBracket) },
+  { 48 /* [             */, NK(RightBracket) },
   { 50 /* ]             */, NK(NonUsNumberSign) },
-  { 51 /* ;             */, LY({ NK(Semicolon), NK(PageDown) }) },
+  { 51 /* ;             */, LY1({ LY({ NK(Semicolon), NK(PageDown) }), CC(LightDown) }) },
   { 52 /* :             */, NK(Quote) },
   { 53 /* Han/Zen       */, NK(Grave) },
   { 54 /* ,             */, LY({ NK(Comma), NK(Home) }) },
@@ -155,31 +168,34 @@ Key keymap[] = {
   { 76 /* Delete        */, LY({ NK(Delete), SC(SystemSleep) }) },
   { 77 /* End           */, NK(End) },
   { 78 /* PgDn          */, NK(PageDown) },
-  { 79 /* ArrowRight    */, NK(ArrowRight) },
-  { 80 /* ArrowLeft     */, NK(ArrowLeft) },
-  { 81 /* ArrowDown     */, NK(ArrowDown) },
-  { 82 /* ArrowUp       */, NK(ArrowUp) },
+  { 79 /* Right         */, NK(Right) },
+  { 80 /* Left          */, NK(Left) },
+  { 81 /* Down          */, NK(Down) },
+  { 82 /* Up            */, NK(Up) },
 
   { 135 /* \(yen)       */, NK(Int1) },
-  { 136 /* Kana         */, TD({ { MO(RightGui), MLT({ MO(RightGui), GST(GESTURE_ID_ARROW) }) },
-                                 { TAP(MO(RightGui), 2), MLT({ MO(RightGui + Shift), GST(GESTURE_ID_ARROW) }) } },
-                               true) },
+  { 136 /* Kana         */, TDDM({ { MO(RightGui), MLT({ MO(RightGui), GST(GESTURE_ID_ARROW) }) },
+                                   { NOP(), MLT({ MO(RightGui + Shift), GST(GESTURE_ID_ARROW) }) } },
+                                 { MOUSE_ID }) },
   { 137 /* \(BackSlash) */, NK(Int3) },
-  { 138 /* Henkan       */, TD({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ SL(1), NK(F13), GST(GESTURE_ID_TAB) }) },
-                                 { MS_CLK(ForwardButton), MLT({ SL(1), MO(Alt), TAP(NK(Tab), 1), GST(GESTURE_ID_ARROW) }) } },
-                               true) },
-  { 139 /* Muhenkan     */, TD({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ SL(1), NK(F13), GST(GESTURE_ID_TAB) }) },
-                                 { MS_CLK(BackwardButton), MLT({ SL(1), MO(Alt), TAP(CK(Shift, Tab), 1), GST(GESTURE_ID_ARROW) }) } },
-                               true) },
+  { 138 /* Henkan       */, TDDM({ { MLT({ NK(Int4), NK(Lang1) }), MLT({ SL(1), NK(F24), GST(GESTURE_ID_TAB) }) },
+                                   { NOP(), MLT({ SL(1), MO(Alt), TAP(NK(Tab)), GST(GESTURE_ID_ARROW) }) },
+                                   { CK(Gui, Tab), MLT({ SL(1), TAP(CK(Gui, Tab)), GST(GESTURE_ID_DESKTOP), TAP_R(NK(Escape)) }) } },
+                                 { MOUSE_ID }) },
+  { 139 /* Muhenkan     */, TDDM({ { MLT({ NK(Int5), NK(Lang2) }), MLT({ SL(1), NK(F24), GST(GESTURE_ID_TAB) }) },
+                                   { NOP(), MLT({ SL(1), MO(Alt), TAP(CK(Shift, Tab)), GST(GESTURE_ID_ARROW) }) },
+                                   { CK(Gui, Tab), MLT({ SL(1), TAP(CK(Gui, Tab)), GST(GESTURE_ID_DESKTOP), TAP_R(NK(Escape)) }) } },
+                                 { MOUSE_ID }) },
 
-  { 200 /* LeftCtrl     */, MLT({ SL1(1), GST(GESTURE_ID_LIGHT) }) },
+  { 200 /* LeftCtrl     */, TD({ { NOP(), MO(Ctrl + Alt) },
+                                 { NOP(), MO(Ctrl + Alt + Shift) } }) },
   { 201 /* LeftShift    */, TD({ { MO(Shift), MO(Shift) },
                                  { CK(Shift, CapsLock), CK(Shift, CapsLock) } }) },
   { 202 /* LeftAlt      */, TD({ { MO(Alt), MO(Alt) },
                                  { TAP(MO(Alt), 2), MO(Alt + Shift) } }) },
-  { 203 /* LeftGui      */, TD({ { MO(Gui), MLT({ MO(Gui), GST(GESTURE_ID_ARROW) }) },
-                                 { TAP(MO(Gui), 2), MLT({ MO(Gui + Shift), GST(GESTURE_ID_ARROW) }) } },
-                               true) },
+  { 203 /* LeftGui      */, TDDM({ { MO(Gui), MLT({ MO(Gui), GST(GESTURE_ID_ARROW) }) },
+                                   { NOP(), MLT({ MO(Gui + Shift), GST(GESTURE_ID_ARROW) }) } },
+                                 { MOUSE_ID }) },
   { 204 /* RightCtrl    */, TD({ { MO(RightCtrl), MO(RightCtrl) },
                                  { TAP(MO(RightCtrl), 2), MO(RightCtrl + Shift) } }) },
   { 205 /* RightShift   */, TD({ { MO(RightShift), MO(RightShift) },
@@ -192,12 +208,12 @@ Key keymap[] = {
 
 Gesture gestureMap[] = {
   // { gesture_id, mouse_id, distance, angle_snap, up_command, down_command, left_command, right_command }
-  { GESTURE_ID_TAB, MOUSE_ID, 10, AngleSnap::Enable, _______, _______, OE(250, CK(Ctrl + Shift, Tab)), OE(250, CK(Ctrl, Tab)) },
-  { GESTURE_ID_ARROW, MOUSE_ID, 30, AngleSnap::Enable, OE(250, NK(ArrowUp)), OE(250, NK(ArrowDown)), OE(250, NK(ArrowLeft)), OE(250, NK(ArrowRight)) },
-  { GESTURE_ID_LIGHT, MOUSE_ID, 10, AngleSnap::Enable, OE(250, CC(LightUp)), OE(250, CC(LightDown)), _______, _______ },
+  { GESTURE_ID_TAB, MOUSE_ID, 15, AngleSnap::Enable, _______, _______, TS(250, CK(Ctrl + Shift, Tab)), TS(250, CK(Ctrl, Tab)) },
+  { GESTURE_ID_ARROW, MOUSE_ID, 15, AngleSnap::Enable, TS(250, NK(Up)), TS(250, NK(Down)), TS(250, NK(Left)), TS(250, NK(Right)) },
+  { GESTURE_ID_DESKTOP, MOUSE_ID, 15, AngleSnap::Enable, _______, _______, TS(250, CK(Gui + Ctrl, Left)), TS(250, CK(Gui + Ctrl, Right)) },
 };
 
 Encoder encoderMap[] = {
   // { encoder_id, counterclockwise_command, clockwise_command }
-  { ENCODER_ID, MS_SCR(-1, 0), MS_SCR(1, 0) },
+  { ENCODER_ID, LY({ MS_SCR(-1, 0), MS_SCR(0, 1) }), LY({ MS_SCR(1, 0), MS_SCR(0, -1) }) },
 };

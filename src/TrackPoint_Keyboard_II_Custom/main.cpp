@@ -173,7 +173,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
   // mouse wheel
   if (report->wheel != 0)
   {
-    EncoderOrTap::notifyScroll();
+    EncoderAndLayer1OrTap::notifyScroll();
 
     xSemaphoreTake(whl_mutex, portMAX_DELAY);
     wheel_sum += report->wheel;
@@ -246,10 +246,11 @@ void setup()
   whl_mutex = xSemaphoreCreateMutexStatic(&whl_mutex_buffer);
   btn_mutex = xSemaphoreCreateMutexStatic(&btn_mutex_buffer);
 
-  EncoderOrTap::begin();
+  EncoderAndLayer1OrTap::begin();
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
+  Bluefruit.setTxPower(8);
   Bluefruit.setName("TrackPoint Keyboard II Custom");
   Bluefruit.autoConnLed(false);
 
