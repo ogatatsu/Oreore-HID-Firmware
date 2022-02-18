@@ -1,7 +1,6 @@
 
 #include "CommandDsl.h"
 #include "CommandTapper.h"
-#include "HidCore.h"
 #include "HidEngine.h"
 #include "KC.h"
 #include "UsbCommandDsl.h"

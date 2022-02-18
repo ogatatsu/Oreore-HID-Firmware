@@ -1,16 +1,16 @@
 
 #include "Arduino.h"
+#include "BleClientTrackpointKeyboard2.h"
 #include "DebounceIn.h"
 #include "HidEngine.h"
 #include "Set.h"
-#include "TPKBD2BleHost.h"
 #include "UsbHid.h"
 #include "bluefruit.h"
 #include "keymap.h"
 
 using namespace hidpg;
 
-TPKBD2BleHost tpkbd2;
+BleClientTrackpointKeyboard2 tpkbd2;
 SemaphoreHandle_t mov_mutex;
 SemaphoreHandle_t whl_mutex;
 SemaphoreHandle_t btn_mutex;
@@ -99,7 +99,7 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   Serial.println(reason, HEX);
 }
 
-void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
+void keyboard_report_callback(trackpoint_keyboard_2_keyboard_report_t *report)
 {
   // Serial.print("[keyboard] keycode = ");
   // Serial.printBuffer(report->keycode, 6);
@@ -139,7 +139,7 @@ void keyboard_report_callback(tpkbd2_keyboard_report_t *report)
   xSemaphoreGive(btn_mutex);
 }
 
-void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
+void trackpoint_report_callback(trackpoint_keyboard_2_trackpoint_report_t *report)
 {
   // Serial.printf("[Trackpoint] buttons = %2d, x = %4d, y = %4d, wheel = %2d\n", report->buttons, report->x, report->y, report->wheel);
 
@@ -186,7 +186,7 @@ void trackpoint_report_callback(tpkbd2_trackpoint_report_t *report)
   }
 }
 
-void consumer_report_callback(tpkbd2_consumer_report_t *report)
+void consumer_report_callback(trackpoint_keyboard_2_consumer_report_t *report)
 {
   Serial.printf("[Consumer] usage_code = %d\n", report->usage_code);
 

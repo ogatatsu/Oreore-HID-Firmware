@@ -1,6 +1,6 @@
 
 #include "Arduino.h"
-#include "BTTB179BleHost.h"
+#include "BleClientBTTB179.h"
 #include "HidEngine.h"
 #include "Set.h"
 #include "UsbHid.h"
@@ -9,7 +9,7 @@
 
 using namespace hidpg;
 
-BTTB179BleHost bttb179;
+BleClientBTTB179 bttb179;
 SemaphoreHandle_t mov_mutex;
 SemaphoreHandle_t whl_mutex;
 int16_t delta_x_sum = 0;

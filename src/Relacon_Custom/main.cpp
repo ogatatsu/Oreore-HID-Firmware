@@ -1,7 +1,7 @@
 
 #include "Arduino.h"
+#include "BleClientRelacon.h"
 #include "HidEngine.h"
-#include "RelaconBleHost.h"
 #include "Set.h"
 #include "UsbHid.h"
 #include "bluefruit.h"
@@ -9,7 +9,7 @@
 
 using namespace hidpg;
 
-RelaconBleHost relacon;
+BleClientRelacon relacon;
 SemaphoreHandle_t mov_mutex;
 SemaphoreHandle_t whl_mutex;
 int16_t delta_x_sum = 0;

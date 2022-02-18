@@ -9,9 +9,9 @@ constexpr uint8_t GESTURE_ID_TRC = 0;
 
 Key keymap[] = {
   { 0, MS_CLK(LeftButton) },
-  { 1, TD({ { MS_CLK(RightButton), MS_CLK(RightButton) },
-            { TAP(MS_CLK(RightButton), 2, 30), GST(GESTURE_ID_TRC) } },
-          true) },
+  { 1, TDDM({ { MS_CLK(RightButton), MS_CLK(RightButton) },
+              { TAP(MS_CLK(RightButton), 2, 30), GST(GESTURE_ID_TRC) } },
+            { MOUSE_ID }) },
   { 2, MS_CLK(MiddleButton) },
   { 3, MS_CLK(BackwardButton) },
   { 4, MS_CLK(ForwardButton) },
