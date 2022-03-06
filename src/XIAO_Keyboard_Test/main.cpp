@@ -7,7 +7,6 @@
 
 using namespace hidpg;
 
-
 void matrix_scan_callback(const Set &ids)
 {
   HidEngine.applyToKeymap(ids);
@@ -25,8 +24,6 @@ void setup()
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.setKeymap(keymap);
   HidEngine.start();
-
-  vTaskStartScheduler();
 }
 
 void loop()

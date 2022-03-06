@@ -1,226 +1,205 @@
 
 #include "Arduino.h"
-#include "BleClientBTTB179.h"
+#include "Bluefruit_ConnectionController.h"
+#include "DebounceIn.h"
 #include "HidEngine.h"
-#include "Set.h"
 #include "UsbHid.h"
-#include "bluefruit.h"
 #include "keymap.h"
 
 using namespace hidpg;
 
-BleClientBTTB179 bttb179;
-SemaphoreHandle_t mov_mutex;
-SemaphoreHandle_t whl_mutex;
+constexpr const char *DEVICE_NAME = "BTTB179 Custom";
+
+BLECentralProfileBTTB179 BTTB179;
+BlinkLed ScanLed(PIN_LED1, LOW);
+SemaphoreHandle_t callback_mutex;
 int16_t delta_x_sum = 0;
 int16_t delta_y_sum = 0;
 int16_t wheel_sum = 0;
 int16_t pan_sum = 0;
 bool is_mouse_move_called = false;
-bool is_rotate_encoder_called = false;
+bool is_rotate_encoder0_called = false;
+bool is_rotate_encoder1_called = false;
 Set ids;
 
-void scan_callback(ble_gap_evt_adv_report_t *report)
-{
-  uint8_t buffer[32] = {};
+//------------------------------------------------------------------+
+// tinyusb
+//------------------------------------------------------------------+
 
-  if (Bluefruit.Scanner.parseReportByType(report, BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, buffer, sizeof(buffer)))
-  {
-    if (strcmp((char *)buffer, "SANWA BTTB179BK") == 0)
-    {
-      Bluefruit.Central.connect(report);
-      return;
-    }
-  }
-  Bluefruit.Scanner.resume();
+void tud_mount_cb(void)
+{
+  ScanLed.resume();
 }
 
-void connect_callback(uint16_t conn_handle)
+void tud_umount_cb(void)
 {
-  Serial.println("Connected");
-  Serial.print("Discovering HID  Service ... ");
-
-  BLEConnection *conn = Bluefruit.Connection(conn_handle);
-
-  if (bttb179.discover(conn_handle))
-  {
-    Serial.println("Found it");
-
-    // HID device mostly require pairing/bonding
-    conn->requestPairing();
-
-    Serial.println("Ready to receive from peripheral");
-  }
-  else
-  {
-    Serial.println("Found NONE");
-
-    // disconnect since we couldn't find blehid service
-    conn->disconnect();
-  }
+  ScanLed.suspend();
 }
 
-void connection_secured_callback(uint16_t conn_handle)
+void tud_suspend_cb(bool remote_wakeup_en)
 {
-  BLEConnection *conn = Bluefruit.Connection(conn_handle);
-
-  if (!conn->secured())
-  {
-    // It is possible that connection is still not secured by this time.
-    // This happens (central only) when we try to encrypt connection using stored bond keys
-    // but peer reject it (probably it remove its stored key).
-    // Therefore we will request an pairing again --> callback again when encrypted
-    conn->requestPairing();
-  }
-  else
-  {
-    Serial.println("Secured");
-
-    bttb179.enableTrackball();
-
-    Serial.println("Ready to receive from peripheral");
-  }
+  ScanLed.suspend();
 }
 
-void disconnect_callback(uint16_t conn_handle, uint8_t reason)
+void tud_resume_cb(void)
 {
-  (void)conn_handle;
-  (void)reason;
-
-  Serial.print("Disconnected, reason = 0x");
-  Serial.println(reason, HEX);
+  ScanLed.resume();
 }
 
-void trackball_report_callback(bttb179_trackball_report_t *report)
+//------------------------------------------------------------------+
+// Trackball
+//------------------------------------------------------------------+
+
+void trackball_report_callback(uint8_t buttons, int16_t x, int16_t y, int8_t wheel, int8_t pan)
 {
-  // Serial.printf("[Trackball] buttons = %2d, x = %4d, y = %4d, wheel = %2d, pan = %2d\n", report->buttons, report->x, report->y, report->wheel, report->pan);
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
 
   // buttons
-  ids.update(0, bitRead(report->buttons, 0)); // left button
-  ids.update(1, bitRead(report->buttons, 1)); // right button
-  ids.update(2, bitRead(report->buttons, 2)); // middle button
-  ids.update(3, bitRead(report->buttons, 3)); // backward button
-  ids.update(4, bitRead(report->buttons, 4)); // forward button
-  HidEngine.applyToKeymap(ids);
+  bool is_update = false;
+  is_update |= ids.update(0, bitRead(buttons, 0)); // left button
+  is_update |= ids.update(1, bitRead(buttons, 1)); // right button
+  is_update |= ids.update(2, bitRead(buttons, 2)); // middle button
+  is_update |= ids.update(3, bitRead(buttons, 3)); // backward button
+  is_update |= ids.update(4, bitRead(buttons, 4)); // forward button
+  if (is_update)
+  {
+    HidEngine.applyToKeymap(ids);
+  }
 
   // mouse move
-  if (report->x != 0 || report->y != 0)
+  if (x != 0 || y != 0)
   {
-    xSemaphoreTake(mov_mutex, portMAX_DELAY);
-    delta_x_sum += report->x;
-    delta_y_sum += report->y;
+    delta_x_sum += x;
+    delta_y_sum += y;
     if (is_mouse_move_called == false)
     {
-      HidEngine.mouseMove(MOUSE_ID);
+      HidEngine.movePointer(PdTrackball);
       is_mouse_move_called = true;
     }
-    xSemaphoreGive(mov_mutex);
   }
 
   // wheel
-  if (report->wheel != 0)
+  if (wheel != 0)
   {
-    xSemaphoreTake(whl_mutex, portMAX_DELAY);
-    wheel_sum += report->wheel;
-    if (is_rotate_encoder_called == false)
+    wheel_sum += wheel;
+    if (is_rotate_encoder0_called == false)
     {
-      HidEngine.rotateEncoder(0);
-      is_rotate_encoder_called = true;
+      HidEngine.rotateEncoder(EncWheel);
+      is_rotate_encoder0_called = true;
     }
-    xSemaphoreGive(whl_mutex);
   }
 
   // pan
-  if (report->pan != 0)
+  if (pan != 0)
   {
-    xSemaphoreTake(whl_mutex, portMAX_DELAY);
-    pan_sum += report->pan;
-    if (is_rotate_encoder_called == false)
+    pan_sum += pan;
+    if (is_rotate_encoder1_called == false)
     {
-      HidEngine.rotateEncoder(1);
-      is_rotate_encoder_called = true;
+      HidEngine.rotateEncoder(EncPan);
+      is_rotate_encoder1_called = true;
     }
-    xSemaphoreGive(whl_mutex);
   }
+  xSemaphoreGive(callback_mutex);
 }
 
-void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
+//------------------------------------------------------------------+
+// Dongle
+//------------------------------------------------------------------+
+
+void debounce_in_callback(uint8_t pin, bool state)
 {
-  if (mouse_id == MOUSE_ID)
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  if (pin == PIN_BUTTON1)
   {
-    xSemaphoreTake(mov_mutex, portMAX_DELAY);
+    ids.update(255, !state);
+    HidEngine.applyToKeymap(ids);
+  }
+  xSemaphoreGive(callback_mutex);
+}
+
+//------------------------------------------------------------------+
+// HidEngine
+//------------------------------------------------------------------+
+
+void read_pointer_delta_callback(PointingDeviceId pointing_device_id, int16_t &delta_x, int16_t &delta_y)
+{
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  if (pointing_device_id == PdTrackball)
+  {
     delta_x = delta_x_sum;
     delta_y = delta_y_sum;
     delta_x_sum = delta_y_sum = 0;
     is_mouse_move_called = false;
-    xSemaphoreGive(mov_mutex);
   }
+  xSemaphoreGive(callback_mutex);
 }
 
-void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
+void read_encoder_step_callback(EncoderId encoder_id, int16_t &step)
 {
-  xSemaphoreTake(whl_mutex, portMAX_DELAY);
-  if (encoder_id == 0)
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  if (encoder_id == EncWheel)
   {
     step = wheel_sum;
     wheel_sum = 0;
+    is_rotate_encoder0_called = false;
   }
-  else if (encoder_id == 1)
+  else if (encoder_id == EncPan)
   {
     step = pan_sum;
     pan_sum = 0;
+    is_rotate_encoder1_called = false;
   }
-  is_rotate_encoder_called = false;
-  xSemaphoreGive(whl_mutex);
+  xSemaphoreGive(callback_mutex);
 }
+
+//------------------------------------------------------------------+
+// main
+//------------------------------------------------------------------+
 
 void setup()
 {
   Serial.begin(115200);
 
-  mov_mutex = xSemaphoreCreateMutex();
-  whl_mutex = xSemaphoreCreateMutex();
+  static StaticSemaphore_t mutex_buffer;
+  callback_mutex = xSemaphoreCreateMutexStatic(&mutex_buffer);
 
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
-  Bluefruit.setName("BTTB179 Custom");
-  Bluefruit.autoConnLed(false);
+  Bluefruit.setTxPower(8);
+  Bluefruit.setName(DEVICE_NAME);
 
-  // Init BTTB179 Host
-  bttb179.begin();
-  bttb179.setTrackballReportCallback(trackball_report_callback);
+  // BTTB179 Host
+  BTTB179.begin();
+  BTTB179.Hid.setTrackballReportCallback(trackball_report_callback);
 
-  // Init Usb HID
+  // ConnectionController
+  ScanLed.begin();
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Central.setProfile(&BTTB179);
+  Bluefruit_ConnectionController.Central.setScanLed(&ScanLed);
+  Bluefruit_ConnectionController.Central.start();
+
+  // Usb
+  TinyUSBDevice.setProductDescriptor(DEVICE_NAME);
   UsbHid.begin();
   HidReporter *hid_reporter = UsbHid.getHidReporter();
 
-  // Init HidEngine
+  // Dongle Button
+  DebounceIn.addPin(PIN_BUTTON1, INPUT_PULLUP, 10);
+  DebounceIn.setCallback(debounce_in_callback);
+  DebounceIn.start();
+
+  // HidEngine
   HidEngine.setHidReporter(hid_reporter);
-  HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
+  HidEngine.setReadPointerDeltaCallback(read_pointer_delta_callback);
   HidEngine.setReadEncoderStepCallback(read_encoder_step_callback);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
   HidEngine.setGestureMap(gestureMap);
   HidEngine.start();
-
-  // Callbacks for Central
-  Bluefruit.Central.setConnectCallback(connect_callback);
-  Bluefruit.Central.setDisconnectCallback(disconnect_callback);
-  Bluefruit.Security.setSecuredCallback(connection_secured_callback);
-
-  // Start Central Scanning
-  Bluefruit.Scanner.setRxCallback(scan_callback);
-  Bluefruit.Scanner.restartOnDisconnect(true);
-  Bluefruit.Scanner.setInterval(160, 80);   // in unit of 0.625 ms
-  Bluefruit.Scanner.filterService(bttb179); // only report HID service
-  Bluefruit.Scanner.useActiveScan(false);
-  Bluefruit.Scanner.start(0); // 0 = Don't stop scanning after n seconds
-
-  vTaskDelete(xTaskGetCurrentTaskHandle());
-  // suspendLoop();
 }
 
 void loop()
 {
-  // not used
+  suspendLoop();
 }

@@ -24,11 +24,15 @@
 
 #include "config.h"
 
-#include "BleControllerSlave.h"
+#include "BlinkLed.h"
+#include "Bluefruit_ConnectionController.h"
 #include "MatrixScan.h"
 #include "matrix.h"
 
 using namespace hidpg;
+
+BLEPeripheralProfileUart BLEProfile;
+BlinkLed AdvLed(PIN_LED1);
 
 void cannot_connect_callback()
 {
@@ -54,17 +58,34 @@ void matrix_scan_callback(const Set &ids)
   // Setが空でも空という情報は送りたいので１バイト目は適当になにか入れておいて、キーの押し情報は２バイト目以降に詰める
   buf[0] = 0;
   ids.toArray(buf + 1);
-  BleControllerSlave.sendData(buf, sizeof(buf));
+  BLEProfile.Uart.write(buf, sizeof(buf));
 }
 
 void setup()
 {
-  BleControllerSlave.begin();
+  // Bluefruit
+  Bluefruit.configPrphConn(BLE_GATT_ATT_MTU_DEFAULT, BLE_GAP_EVENT_LENGTH_DEFAULT, 2, BLE_GATTC_WRITE_CMD_TX_QUEUE_SIZE_DEFAULT);
+  Bluefruit.begin(1, 0);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
-  BleControllerSlave.setReceiveDataCallback(receive_data_callback);
-  BleControllerSlave.startConnection();
+  ble_gap_addr_t own_addr = {
+    .addr_id_peer = 0,
+    .addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC,
+    .addr = BLE_OWN_ADDR,
+  };
+  Bluefruit.setAddr(&own_addr);
+  Bluefruit.setTxPower(8);
 
+  // Bluefruit_ConnectionController
+  BLEProfile.begin();
+  AdvLed.begin();
+  
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
+  Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+  Bluefruit_ConnectionController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+  Bluefruit_ConnectionController.Periph.start();
+
+  // MatrixScan
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
   MatrixScan.start();
@@ -86,6 +107,6 @@ uint8_t readBatteryLevel()
 
 void loop()
 {
-  BleControllerSlave.setBatteryLevel(readBatteryLevel());
+  BLEProfile.Bas.notify(readBatteryLevel());
   delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

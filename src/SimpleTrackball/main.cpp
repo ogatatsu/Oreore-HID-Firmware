@@ -22,17 +22,28 @@
   THE SOFTWARE.
 */
 
-#include "config.h"
-
-#include "BleController.h"
+#include "Bluefruit_ConnectionController.h"
 #include "HidEngine.h"
 #include "PMW3360DM.h"
 
 using namespace hidpg;
 
-constexpr uint8_t MOUSE_ID = 0;
+// デバイス名
+constexpr const char *DEVICE_NAME = "SimpleTrackball";
+// 電池の最大電圧
+constexpr double MAX_BATTERY_VOLTAGE = 3.0;
+// 電池の最小電圧
+constexpr double MIN_BATTERY_VOLTAGE = 2.0;
+// 電池の電圧を読み取る間隔 (1min)
+constexpr uint32_t READ_BATTERY_VOLTAGE_INTERVAL_MS = (1000 * 60);
+// マウスセンサーピン
+constexpr uint8_t PMW3360DM_NCS_PIN = 30;
+constexpr uint8_t PMW3360DM_INTERRUPT_PIN = 27;
 
-PMW3360DM pmw3360dm = PMW3360DM::create<0>(ThreadSafeSPI, PMW3360DM_NCS_PIN, PMW3360DM_INTERRUPT_PIN);
+BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_MOUSE);
+BlinkLed AdvLed(PIN_LED1);
+PMW3360DM &pmw3360dm = PMW3360DM::create<0>(ThreadSafeSPI, PMW3360DM_NCS_PIN, PMW3360DM_INTERRUPT_PIN);
+constexpr PointingDeviceId PdTrackbacll{0};
 
 void cannot_connect_callback()
 {
@@ -42,12 +53,12 @@ void cannot_connect_callback()
 
 void motion_callback()
 {
-  HidEngine.mouseMove(MOUSE_ID);
+  HidEngine.movePointer(PdTrackbacll);
 }
 
-void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
+void read_pointer_delta_callback(PointingDeviceId pointing_device_id, int16_t &delta_x, int16_t &delta_y)
 {
-  if (mouse_id == MOUSE_ID)
+  if (pointing_device_id == PdTrackbacll)
   {
     pmw3360dm.readDelta(&delta_x, &delta_y);
     // トラックボールはセンサーを逆向きに取り付けるのでdelta_xを-にする
@@ -57,16 +68,30 @@ void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delt
 
 void setup()
 {
-  BleController.begin();
+  // Bluefruit
+  Bluefruit.configPrphConn(BLE_GATT_ATT_MTU_DEFAULT, BLE_GAP_EVENT_LENGTH_DEFAULT, 2, BLE_GATTC_WRITE_CMD_TX_QUEUE_SIZE_DEFAULT);
+  Bluefruit.begin(1, 0);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
-  BleController.Periph.startConnection();
-  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
+  Bluefruit.setTxPower(8);
+  Bluefruit.setName(DEVICE_NAME);
 
+  // ConnectionController
+  BLEProfile.begin();
+  AdvLed.begin();
+
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
+  Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+  Bluefruit_ConnectionController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+  Bluefruit_ConnectionController.Periph.start();
+  HidReporter *hid_reporter = BLEProfile.getHidReporter();
+
+  // HidEngine
   HidEngine.setHidReporter(hid_reporter);
-  HidEngine.setReadMouseDeltaCallback(read_mouse_delta_callback);
+  HidEngine.setReadPointerDeltaCallback(read_pointer_delta_callback);
   HidEngine.start();
 
+  // PMW3360
   pmw3360dm.setCallback(motion_callback);
   pmw3360dm.start();
   pmw3360dm.changeCpi(PMW3360DM::Cpi::_1000);
@@ -88,6 +113,6 @@ uint8_t readBatteryLevel()
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  BLEProfile.Bas.notify(readBatteryLevel());
   delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

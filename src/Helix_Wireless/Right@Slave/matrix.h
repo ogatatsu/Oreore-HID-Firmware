@@ -1,4 +1,3 @@
-
 #include "MatrixScan.h"
 
 using namespace hidpg;
@@ -25,9 +24,9 @@ constexpr uint8_t in_len = sizeof(in_pins) / sizeof(in_pins[0]);
 
 // マトリックスの定義
 Switch *matrix[out_len][in_len] = {
-  { SW(1), SW(2), SW(3), SW(4), SW(5), SW(6), nullptr },
-  { SW(7), SW(8), SW(9), SW(10), SW(11), SW(12), nullptr },
-  { SW(13), SW(14), SW(15), SW(16), SW(17), SW(18), nullptr },
-  { SW(19), SW(20), SW(21), SW(22), SW(23), SW(24), SW(25) },
-  { SW(26), SW(27), SW(28), SW(29), SW(30), SW(31), SW(32) },
+  { SW(12), SW(11), SW(10), SW(9), SW(8), SW(7), nullptr },
+  { SW(24), SW(23), SW(22), SW(21), SW(20), SW(19), nullptr },
+  { SW(36), SW(35), SW(34), SW(33), SW(32), SW(31), nullptr },
+  { SW(50), SW(49), SW(48), SW(47), SW(46), SW(45), SW(44) },
+  { SW(64), SW(63), SW(62), SW(61), SW(60), SW(59), SW(58) },
 };

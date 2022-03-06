@@ -3,6 +3,7 @@
 #include "BleCommandDsl.h"
 #include "CommandDsl.h"
 #include "CommandTapper.h"
+#include "HidCore.h"
 #include "HidEngine.h"
 #include "KC.h"
 #include "UsbCommandDsl.h"
@@ -10,17 +11,27 @@
 using namespace hidpg;
 
 constexpr PointingDeviceId PdTrackpoint{0};
+constexpr PointingDeviceId PdLift{1};
+constexpr PointingDeviceId PdRelacon{2};
 
 constexpr EncoderId EncTrackpoint{0};
+constexpr EncoderId EncLiftWheel{1};
+constexpr EncoderId EncLiftPan{2};
+constexpr EncoderId EncRelaconWheel{3};
 
 constexpr KeyShiftId KeyShiftRaise{0};
 constexpr KeyShiftId KeyShiftLower{1};
 constexpr KeyShiftId KeyShiftTaskSwitch{2};
+constexpr KeyShiftId KeyShiftRelaconTaskSwitch{3};
 
 constexpr GestureId GstTabSwitch{0};
 constexpr GestureId GstArrow{1};
+constexpr GestureId GstMiddleButton{2};
 
 constexpr EncoderShiftId EncShiftPan{0};
+constexpr EncoderShiftId EncShiftVolume{1};
+constexpr EncoderShiftId EncShiftTaskSwitch{2};
+constexpr EncoderShiftId EncShiftTabSwitch{3};
 
 constexpr double TrackpointSpeedMagnification = 2.5;
 
@@ -99,14 +110,99 @@ bool EncoderAnd_A_IfNotRunning_B::_scrolled = false;
 SemaphoreHandle_t EncoderAnd_A_IfNotRunning_B::_mutex = nullptr;
 StaticSemaphore_t EncoderAnd_A_IfNotRunning_B::_mutex_buffer;
 
+class RightButtonOrEncorderShift
+    : public Command,
+      public BeforeMovePointerEventListener,
+      public BeforeRotateEncoderEventListener
+{
+public:
+  RightButtonOrEncorderShift(EncoderShiftId encoder_shift_id)
+      : BeforeMovePointerEventListener(),
+        BeforeRotateEncoderEventListener(),
+        _encoder_shift_id(encoder_shift_id.value)
+  {
+  }
+
+  void onPress() override
+  {
+    _state = State::Pressed;
+    startListenBeforeMovePointer();
+    startListenBeforeRotateEncoder();
+    _delta_x_sum = 0;
+    _delta_y_sum = 0;
+  }
+
+  void onRelease() override
+  {
+    if (_state == State::Pressed)
+    {
+      Hid.mouseButtonsPress(RightButton);
+      Hid.mouseButtonsRelease(RightButton);
+    }
+    else if (_state == State::MoveAndClicked)
+    {
+      Hid.mouseButtonsRelease(RightButton);
+    }
+    else if (_state == State::EncoderShifted)
+    {
+      HidEngine.stopEncoderShift(_encoder_shift_id);
+    }
+    _state = State::Unexecuted;
+    stopListenBeforeMovePointer();
+    stopListenBeforeRotateEncoder();
+  }
+
+  void onBeforeMovePointer(PointingDeviceId pointing_device_id, int16_t delta_x, int16_t delta_y) override
+  {
+    if (_state == State::Pressed)
+    {
+      _delta_x_sum = etl::clamp(_delta_x_sum + delta_x, INT16_MIN, INT16_MAX);
+      _delta_y_sum = etl::clamp(_delta_y_sum + delta_y, INT16_MIN, INT16_MAX);
+      if (abs(_delta_x_sum) >= 20 || abs(_delta_y_sum) >= 20)
+      {
+        Hid.mouseMove(-_delta_x_sum, -_delta_y_sum);
+        Hid.mouseButtonsPress(RightButton);
+        delay(10);
+        Hid.mouseMove(_delta_x_sum, _delta_y_sum);
+        _state = State::MoveAndClicked;
+      }
+    }
+  }
+
+  void onBeforeRotateEncoder(EncoderId encoder_id, int16_t step) override
+  {
+    if (_state == State::Pressed)
+    {
+      _state = State::EncoderShifted;
+      HidEngine.startEncoderShift(_encoder_shift_id);
+    }
+  }
+
+private:
+  enum class State
+  {
+    Unexecuted,
+    Pressed,
+    MoveAndClicked,
+    EncoderShifted,
+  };
+
+  EncoderShiftIdLink _encoder_shift_id;
+  State _state;
+  int16_t _delta_x_sum;
+  int16_t _delta_y_sum;
+};
+
 //------------------------------------------------------------------+
 // Keymap
 //------------------------------------------------------------------+
 
 Key keymap[] = {
+
     {0 /*  LeftButton          */, MS_CLK(LeftButton)},
     {1 /*  RightButton         */, MS_CLK(RightButton)},
-    {2 /*  MiddleButton        */, new EncoderAnd_A_IfNotRunning_B(SFT(KeyShiftLower), MS_CLK(MiddleButton))},
+    {2 /*  MiddleButton        */, new EncoderAnd_A_IfNotRunning_B(SFT(KeyShiftLower, EncShiftVolume, GstMiddleButton),
+                                                                   MS_CLK(MiddleButton))},
 
     {4 /*  a                   */, KC(A)},
     {5 /*  b                   */, KC(B)},
@@ -193,10 +289,10 @@ Key keymap[] = {
                                           {PdTrackpoint})},
     {137 /* \(BackSlash)       */, KC(Int3)},
     {138 /* Henkan             */, TD_DPM({MLT(SFT(KeyShiftRaise, EncShiftPan, GstTabSwitch), KC(F24)), MLT(KC(Int4), KC(Lang1))},
-                                          {SFT(KeyShiftTaskSwitch, GstArrow)},
+                                          {SFT(KeyShiftTaskSwitch, EncShiftTaskSwitch, GstArrow)},
                                           {PdTrackpoint})},
     {139 /* Muhenkan           */, TD_DPM({MLT(SFT(KeyShiftRaise, EncShiftPan, GstTabSwitch), KC(F24)), MLT(KC(Int5), KC(Lang2))},
-                                          {SFT(KeyShiftTaskSwitch, GstArrow)},
+                                          {SFT(KeyShiftTaskSwitch, EncShiftTaskSwitch, GstArrow)},
                                           {PdTrackpoint})},
 
     {200 /* LeftCtrl           */, TD({KC(Ctrl + Alt)},
@@ -226,7 +322,26 @@ Key keymap[] = {
     {220 /* ?            (F11) */, NOP()},
     {221 /* ?            (F12) */, NOP()},
 
-    // MDBT50Q Dongle
+    // Lift
+
+    {231 /* LeftButton         */, MS_CLK(LeftButton)},
+    {232 /* RightButton        */, new RightButtonOrEncorderShift(EncShiftTabSwitch)},
+    {233 /* MiddleButton       */, MS_CLK(MiddleButton)},
+    {234 /* BackwardButton     */, MS_CLK(BackwardButton)},
+    {235 /* ForwardButton      */, MS_CLK(ForwardButton)},
+
+    // Relacon
+
+    {241 /* LeftButton         */, MS_CLK(LeftButton)},
+    {242 /* RightButton        */, new RightButtonOrEncorderShift(EncShiftTabSwitch)},
+    {243 /* MiddleButton       */, MS_CLK(MiddleButton)},
+    {244 /* ForwardButton      */, HT(SFT(KeyShiftRelaconTaskSwitch), MS_CLK(BackwardButton))},
+    {245 /* ForwardButton      */, HT(SFT(KeyShiftRelaconTaskSwitch), MS_CLK(ForwardButton))},
+    {246 /* NextTrack          */, KC(NextTrack)},
+    {247 /* PrevTrack          */, KC(PrevTrack)},
+    {248 /* PlayPause          */, KC(PlayPause)},
+    {249 /* VolumeUp           */, KC(VolumeUp)},
+    {250 /* VolumeDown         */, KC(VolumeDown)},
 
     {255 /* Dongle Button      */, HT(RESET(), NOP(), 2000)},
 };
@@ -284,12 +399,17 @@ KeyShift keyShiftMap[] = {
             {55 /* .               */, KC(FastForward)},
             {44 /* space           */, KC(PlayPause)},
             {16 /* m               */, KC(Mute)},
+
+            {231 /* LeftButton     */, KC(PlayPause)},
+            {233 /* MiddleButton   */, KC(Mute)},
+            {234 /* BackwardButton */, KC(PrevTrack)},
+            {235 /* ForwardButton  */, KC(NextTrack)},
         }),
     },
 
     {
         KeyShiftTaskSwitch,
-        KeymapOverlay::Disable,
+        KeymapOverlay::Enable,
         KEYMAP({
             {11 /* h               */, RPT(KC(Shift + Tab), 300, 150)},
             {13 /* j               */, RPT(KC(Down), 300, 150)},
@@ -305,13 +425,22 @@ KeyShift keyShiftMap[] = {
         }),
         PreCommand{MLT(KC(Alt), TAP(KC(Tab)), TAP(KC(Shift + Tab))), Timing::Immediately},
     },
+
+    {
+        KeyShiftRelaconTaskSwitch,
+        KeymapOverlay::Enable,
+        KEYMAP({
+            {241 /* LeftButton     */, RPT(KC(Tab), 300, 150)},
+            {242 /* RightButton    */, RPT(KC(Shift + Tab), 300, 150)},
+        }),
+        PreCommand{MLT(KC(Alt), TAP(KC(Tab)), TAP(KC(Shift + Tab))), Timing::JustBeforeFirstAction},
+    },
 };
 
 Combo comboMap[] = {
     // { first_key_id, second_key_id, command, combo_term_ms, combo_behavior }
 
-    // dummy
-    {231, 232, NOP(), 999, ComboBehavior::AnyOrder_SlowRelease},
+    {231, 232, MS_CLK(MiddleButton), 75, ComboBehavior::AnyOrder_SlowRelease},
 };
 
 Gesture gestureMap[] = {
@@ -324,21 +453,49 @@ Gesture gestureMap[] = {
 
     {GstArrow, PdTrackpoint, GestureDistance, AngleSnap::Enable,
      STEP_SPD(KC(Up), 250), STEP_SPD(KC(Down), 250), STEP_SPD(KC(Left), 250), STEP_SPD(KC(Right), 250)},
+
+    {GstMiddleButton, PdLift, 1, AngleSnap::Disable,
+     MS_MOV(0, -1), MS_MOV(0, 1), MS_MOV(-1, 0), MS_MOV(1, 0),
+     PreCommand{MS_CLK(MiddleButton), Timing::JustBeforeFirstAction}},
 };
 
 Encoder encoderMap[] = {
-    // { encoder_id, step,
+    // { encoder_id,
     //   counterclockwise_command, clockwise_command }
 
     {EncTrackpoint, 1,
      MS_SCR(-1, 0), MS_SCR(1, 0)},
+
+    {EncLiftWheel, 1,
+     MS_SCR(-1, 0), MS_SCR(1, 0)},
+
+    {EncLiftPan, 1,
+     MS_SCR(0, -1), MS_SCR(0, 1)},
+
+    {EncRelaconWheel, 1,
+     MS_SCR(-1, 0), MS_SCR(1, 0)},
 };
 
 EncoderShift encoderShiftMap[] = {
-    // { encoder_shift_id, encoder_id, step,
+    // { encoder_shift_id, encoder_id,
     //   counterclockwise_command, clockwise_command,
     //   [PreCommand{ command, timing }] }
 
     {EncShiftPan, EncTrackpoint, 1,
      MS_SCR(0, 1), MS_SCR(0, -1)},
+
+    {EncShiftVolume, EncLiftWheel, 1,
+     KC(VolumeUp), KC(VolumeDown)},
+
+    {EncShiftTaskSwitch, EncLiftWheel, 1,
+     KC(Tab), KC(Shift + Tab)},
+
+    {EncShiftPan, EncLiftWheel, 1,
+     MS_SCR(0, 1), MS_SCR(0, -1)},
+
+    {EncShiftTabSwitch, EncLiftWheel, 1,
+     KC(Ctrl + Tab), KC(Ctrl + Shift + Tab)},
+
+    {EncShiftTabSwitch, EncRelaconWheel, 1,
+     KC(Ctrl + Tab), KC(Ctrl + Shift + Tab)},
 };

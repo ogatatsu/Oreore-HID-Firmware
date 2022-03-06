@@ -13,22 +13,29 @@
 
 using namespace hidpg;
 
-constexpr uint8_t ENCODER_LEFT_ID = 0;
-constexpr uint8_t ENCODER_RIGHT_ID = 1;
+constexpr EncoderId EncLeft{0};
+constexpr EncoderId EncRight{1};
+
+uint8_t MOUSE_ID = 0;
 
 Key keymap[] = {
-  { 1, NK(A) },
-  { 2, NK(B) },
-  { 3, NK(C) },
-  { 4, NK(D) },
-  { 5, NK(E) },
-  { 6, NK(F) },
-  { 7, NK(G) },
-  { 8, NK(H) },
+    {1, KC(A)},
+    {2, KC(B)},
+    {3, KC(C)},
+    {4, KC(D)},
+    {5, KC(E)},
+    {6, KC(F)},
+    {7, KC(G)},
+    {8, KC(H)},
 };
 
 Encoder encoderMap[] = {
-  // { encoder_id, counterclockwise_command, clockwise_command }
-  { ENCODER_LEFT_ID, CC(VolumeDown), CC(VolumeUp) },
-  { ENCODER_RIGHT_ID, MS_SCR(1, 0), MS_SCR(-1, 0) },
+    // { encoder_id, step,
+    //   counterclockwise_command, clockwise_command }
+
+    {EncLeft, 1,
+     MS_SCR(-2, 0), MS_SCR(2, 0)},
+
+    {EncRight, 1,
+     MS_SCR(0, -2), MS_SCR(0, 2)},
 };

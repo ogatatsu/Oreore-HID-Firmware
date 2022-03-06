@@ -25,8 +25,8 @@ constexpr uint8_t in_len = sizeof(in_pins) / sizeof(in_pins[0]);
 // マトリックスの定義
 Switch *matrix[out_len][in_len] = {
   { SW(1), SW(2), SW(3), SW(4), SW(5), SW(6), nullptr },
-  { SW(7), SW(8), SW(9), SW(10), SW(11), SW(12), nullptr },
   { SW(13), SW(14), SW(15), SW(16), SW(17), SW(18), nullptr },
-  { SW(19), SW(20), SW(21), SW(22), SW(23), SW(24), SW(25) },
-  { SW(26), SW(27), SW(28), SW(29), SW(30), SW(31), SW(32) },
+  { SW(25), SW(26), SW(27), SW(28), SW(29), SW(30), nullptr },
+  { SW(37), SW(38), SW(39), SW(40), SW(41), SW(42), SW(43) },
+  { SW(51), SW(52), SW(53), SW(54), SW(55), SW(56), SW(57) },
 };
