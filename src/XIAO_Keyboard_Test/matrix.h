@@ -1,18 +1,17 @@
 #include "MatrixScan.h"
-#include "variant.h"
 
 using namespace hidpg;
 
 // マトリックス回路で使うピンの定義
-static constexpr uint8_t OUT0 = 6; // X
-static constexpr uint8_t OUT1 = 5; // Y
-static constexpr uint8_t OUT2 = 4; // Z
+static constexpr uint8_t OUT0 = 0; // X
+static constexpr uint8_t OUT1 = 7; // Y
+static constexpr uint8_t OUT2 = 6; // Z
 static constexpr uint8_t out_pins[] = { OUT0, OUT1, OUT2 };
 
-static constexpr uint8_t IN0 = 3; // A
-static constexpr uint8_t IN1 = 2; // B
-static constexpr uint8_t IN2 = 1; // C
-static constexpr uint8_t IN3 = 0; // D
+static constexpr uint8_t IN0 = 29; // A
+static constexpr uint8_t IN1 = 28; // B
+static constexpr uint8_t IN2 = 27; // C
+static constexpr uint8_t IN3 = 26; // D
 static constexpr uint8_t in_pins[] = { IN0, IN1, IN2, IN3 };
 
 constexpr uint8_t outLength = sizeof(out_pins) / sizeof(out_pins[0]);

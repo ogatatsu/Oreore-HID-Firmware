@@ -24,73 +24,100 @@
 
 #include "config.h"
 
-#include "BleController.h"
+#include "Bluefruit_ConnectionController.h"
 #include "keymap.h"
 #include "matrix.h"
 
 using namespace hidpg;
 
-Set scan_ids, slave_ids;
-// callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
-SemaphoreHandle_t mutex;
+BLECentralProfileUart RightSide(BLE_PEER_ADDR);
+BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_KEYBOARD);
+BlinkLed AdvLed(PIN_LED1);
+BlinkLed ScanLed(PIN_LED2);
+Set left_ids, right_ids;
+SemaphoreHandle_t callback_mutex;
+StaticSemaphore_t mutex_buffer;
 
 void prph_cannot_connect_callback()
 {
   // スレーブにsystemOffにすることを通知する
   // なんでもよいけどとりあえず0を送っておく
   uint8_t data = 0;
-  BleController.Central.sendData(0, &data, 1);
+  RightSide.Uart.write(&data, 1);
   delay(1000);
 
-  BleController.Central.stopConnection();
+  Bluefruit_ConnectionController.Central.stop();
   MatrixScan.stop_and_setWakeUpInterrupt();
   sd_power_system_off();
 }
 
-void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
+void uart_rx_callback(uint8_t *data, uint16_t len)
 {
-  xSemaphoreTake(mutex, portMAX_DELAY);
-  slave_ids.clear();
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  right_ids.clear();
   // 1バイト目は飛ばす
-  slave_ids.addAll(data + 1, len - 1);
-  HidEngine.applyToKeymap(scan_ids | slave_ids);
-  xSemaphoreGive(mutex);
+  right_ids.addAll(data + 1, len - 1);
+  HidEngine.applyToKeymap(left_ids | right_ids);
+  xSemaphoreGive(callback_mutex);
 }
 
-void cent_disconnect_callback(uint8_t index, uint8_t reason)
+void cent_disconnect_callback(uint16_t conn_handle, uint8_t reason)
 {
   // 切断されたらキーが押しっぱなしにならないように空のデータを送る
-  xSemaphoreTake(mutex, portMAX_DELAY);
-  slave_ids.clear();
-  HidEngine.applyToKeymap(scan_ids | slave_ids);
-  xSemaphoreGive(mutex);
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  right_ids.clear();
+  HidEngine.applyToKeymap(left_ids | right_ids);
+  xSemaphoreGive(callback_mutex);
 }
 
 void matrix_scan_callback(const Set &ids)
 {
-  xSemaphoreTake(mutex, portMAX_DELAY);
-  scan_ids = ids;
-  HidEngine.applyToKeymap(scan_ids | slave_ids);
-  xSemaphoreGive(mutex);
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  left_ids = ids;
+  HidEngine.applyToKeymap(left_ids | right_ids);
+  xSemaphoreGive(callback_mutex);
 }
 
 void setup()
 {
-  mutex = xSemaphoreCreateMutex();
+  Serial.begin(115200);
 
-  BleController.begin();
-  BleController.Periph.setCannnotConnectCallback(prph_cannot_connect_callback);
-  BleController.Central.setReceiveDataCallback(cent_receive_data_callback);
-  BleController.Central.setDisconnectCallback(cent_disconnect_callback);
+  callback_mutex = xSemaphoreCreateMutexStatic(&mutex_buffer);
+
+  // Bluefruit
+  Bluefruit.configPrphConn(BLE_GATT_ATT_MTU_DEFAULT, BLE_GAP_EVENT_LENGTH_DEFAULT, 2, BLE_GATTC_WRITE_CMD_TX_QUEUE_SIZE_DEFAULT);
+  Bluefruit.begin(1, 1);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController.Periph.startConnection();
-  BleController.Central.startConnection();
-  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
+  Bluefruit.setTxPower(8);
+  Bluefruit.setName(BLE_DEVICE_NAME);
 
+  // Central
+  RightSide.begin();
+  RightSide.Uart.setRxCallback(uart_rx_callback);
+  ScanLed.begin();
+
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Central.setProfile(&RightSide);
+  Bluefruit_ConnectionController.Central.setScanLed(&ScanLed);
+  Bluefruit_ConnectionController.Central.setDisconnectCallback(cent_disconnect_callback);
+  Bluefruit_ConnectionController.Central.start();
+
+  // Peripheral
+  BLEProfile.begin();
+  AdvLed.begin();
+
+  Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
+  Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+  Bluefruit_ConnectionController.Periph.setCannotConnectCallback(prph_cannot_connect_callback);
+  Bluefruit_ConnectionController.Periph.start();
+  HidReporter *hid_reporter = BLEProfile.getHidReporter();
+
+  // MatrixScan
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
   MatrixScan.start();
 
+  // HidEngine
   HidEngine.setKeymap(keymap);
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.start();
@@ -112,6 +139,6 @@ uint8_t readBatteryLevel()
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  BLEProfile.Bas.notify(readBatteryLevel());
   delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

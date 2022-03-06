@@ -66,7 +66,7 @@ void setup()
 {
   BleControllerSlave.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleControllerSlave.setCannnotConnectCallback(cannot_connect_callback);
+  BleControllerSlave.setCannotConnectCallback(cannot_connect_callback);
   BleControllerSlave.setReceiveDataCallback(receive_data_callback);
   BleControllerSlave.startConnection();
 

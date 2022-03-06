@@ -31,7 +31,7 @@
 using namespace hidpg;
 
 // callbackはそれぞれ別タスクなので共通で使う変数に触る時はmutexで囲む
-SemaphoreHandle_t mutex;
+SemaphoreHandle_t callback_mutex;
 
 int16_t delta_x_sum = 0;
 int16_t delta_y_sum = 0;
@@ -65,37 +65,37 @@ void cent_receive_data_callback(uint8_t index, uint8_t *data, uint16_t len)
 
   Buf *buf = reinterpret_cast<Buf *>(data);
 
-  xSemaphoreTake(mutex, portMAX_DELAY);
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
   delta_x_sum += buf->delta_x;
   delta_y_sum += buf->delta_y;
   if (is_mouse_move_called == false)
   {
-    HidEngine.mouseMove(MOUSE_ID);
+    HidEngine.movePointer(MOUSE_ID);
     is_mouse_move_called = true;
   }
-  xSemaphoreGive(mutex);
+  xSemaphoreGive(callback_mutex);
 }
 
 void read_mouse_delta_callback(uint8_t mouse_id, int16_t &delta_x, int16_t &delta_y)
 {
   if (mouse_id == MOUSE_ID)
   {
-    xSemaphoreTake(mutex, portMAX_DELAY);
+    xSemaphoreTake(callback_mutex, portMAX_DELAY);
     delta_x = delta_x_sum;
     delta_y = delta_y_sum;
     delta_x_sum = delta_y_sum = 0;
     is_mouse_move_called = false;
-    xSemaphoreGive(mutex);
+    xSemaphoreGive(callback_mutex);
   }
 }
 
 void setup()
 {
-  mutex = xSemaphoreCreateMutex();
+  callback_mutex = xSemaphoreCreateMutex();
 
   BleController.begin();
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController.Periph.setCannnotConnectCallback(prph_cannot_connect_callback);
+  BleController.Periph.setCannotConnectCallback(prph_cannot_connect_callback);
   BleController.Central.setReceiveDataCallback(cent_receive_data_callback);
   BleController.Periph.startConnection();
   BleController.Central.startConnection();

@@ -22,9 +22,7 @@
   THE SOFTWARE.
 */
 
-#include "config.h"
-
-#include "BleController.h"
+#include "Bluefruit_ConnectionController.h"
 #include "DebounceIn.h"
 #include "HidEngine.h"
 #include "RotaryEncoder.h"
@@ -33,10 +31,28 @@
 
 using namespace hidpg;
 
-Set ids;
-RotaryEncoder<ENCODER_LEFT_ID> EncoderLeft;
-RotaryEncoder<ENCODER_RIGHT_ID> EncoderRight;
+// デバイス名
+constexpr const char *DEVICE_NAME = "owl8";
+// ロータリーエンコーダーピン
+constexpr uint16_t ENCODER_LEFT_PIN_A = 4;
+constexpr uint16_t ENCODER_LEFT_PIN_B = 5;
+constexpr uint16_t ENCODER_RIGHT_PIN_A = 6;
+constexpr uint16_t ENCODER_RIGHT_PIN_B = 7;
+// 電池の最大電圧
+constexpr double MAX_BATTERY_VOLTAGE = 3.0;
+// 電池の最小電圧
+constexpr double MIN_BATTERY_VOLTAGE = 2.0;
+// 電池の電圧を読み取る間隔 (1min)
+constexpr uint32_t READ_BATTERY_VOLTAGE_INTERVAL_MS = (1000 * 60);
+// 一定時間操作しない場合自動的にSystemOffモードに (5min)
+constexpr uint32_t AUTO_SYSTEM_OFF_TIMER_MS = (1000 * 60 * 5);
+
+BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_KEYBOARD);
+BlinkLed AdvLed(PIN_LED1, LOW);
+RotaryEncoder &EncoderLeft = RotaryEncoder::create<EncLeft.value>(ENCODER_LEFT_PIN_A, ENCODER_LEFT_PIN_B);
+RotaryEncoder &EncoderRight = RotaryEncoder::create<EncRight.value>(ENCODER_RIGHT_PIN_A, ENCODER_RIGHT_PIN_B);
 SoftwareTimer SystemOffTimer;
+Set ids;
 
 void system_off()
 {
@@ -105,25 +121,25 @@ void encoder_left_callback()
 {
   SystemOffTimer.reset();
 
-  HidEngine.rotateEncoder(ENCODER_LEFT_ID);
+  HidEngine.rotateEncoder(EncLeft);
 }
 
 void encoder_right_callback()
 {
   SystemOffTimer.reset();
 
-  HidEngine.rotateEncoder(ENCODER_RIGHT_ID);
+  HidEngine.rotateEncoder(EncRight);
 }
 
-void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
+void read_encoder_step_callback(EncoderId encoder_id, int16_t &step)
 {
-  switch (encoder_id)
+  switch (encoder_id.value)
   {
-  case ENCODER_LEFT_ID:
+  case EncLeft.value:
     step = EncoderLeft.readStep();
     break;
 
-  case ENCODER_RIGHT_ID:
+  case EncRight.value:
     step = EncoderRight.readStep();
     break;
 
@@ -132,20 +148,32 @@ void read_encoder_step_callback(uint8_t encoder_id, int32_t &step)
   }
 }
 
-
 void setup()
 {
-  // Serial.begin(115200);
+  Serial.begin(115200);
 
-  BleController.begin();
+  // Bluefruit
+  Bluefruit.configPrphConn(BLE_GATT_ATT_MTU_DEFAULT, BLE_GAP_EVENT_LENGTH_DEFAULT, 2, BLE_GATTC_WRITE_CMD_TX_QUEUE_SIZE_DEFAULT);
+  Bluefruit.begin(1, 0);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
-  BleController.Periph.startConnection();
-  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
+  Bluefruit.setTxPower(8);
+  Bluefruit.setName(DEVICE_NAME);
 
+  // ConnectionController
+  BLEProfile.begin();
+  AdvLed.begin();
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
+  Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+  Bluefruit_ConnectionController.Periph.setCannotConnectCallback(cannot_connect_callback);
+  Bluefruit_ConnectionController.Periph.start();
+  HidReporter *hid_reporter = BLEProfile.getHidReporter();
+
+  // SystemOffTimer
   SystemOffTimer.begin(AUTO_SYSTEM_OFF_TIMER_MS, system_off_timer_callback, nullptr, false);
   SystemOffTimer.start();
 
+  // Switch
   DebounceIn.addPin(A3, INPUT_PULLUP_SENSE, 5);   // sw1
   DebounceIn.addPin(A0, INPUT_PULLUP_SENSE, 5);   // sw2
   DebounceIn.addPin(MISO, INPUT_PULLUP_SENSE, 5); // sw3
@@ -157,16 +185,16 @@ void setup()
   DebounceIn.setCallback(debounce_in_callback);
   DebounceIn.start();
 
+  // Encoder
   EncoderLeft.setCallback(encoder_left_callback);
-  EncoderLeft.setPins(4, 5);
   EncoderLeft.useFullStep(true);
   EncoderLeft.start();
 
   EncoderRight.setCallback(encoder_right_callback);
-  EncoderRight.setPins(6, 7);
   EncoderRight.useFullStep(true);
   EncoderRight.start();
 
+  // HidEngine
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.setKeymap(keymap);
   HidEngine.setEncoderMap(encoderMap);
@@ -190,6 +218,6 @@ uint8_t readBatteryLevel()
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  BLEProfile.Bas.notify(readBatteryLevel());
   delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

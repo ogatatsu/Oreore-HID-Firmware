@@ -22,13 +22,25 @@
   THE SOFTWARE.
 */
 
-#include "config.h"
-
-#include "BleController.h"
+#include "Bluefruit_ConnectionController.h"
 #include "keymap.h"
 #include "matrix.h"
 
 using namespace hidpg;
+
+// デバイス名
+constexpr const char *DEVICE_NAME = "owl8";
+// 電池の最大電圧
+constexpr double MAX_BATTERY_VOLTAGE = 3.0;
+// 電池の最小電圧
+constexpr double MIN_BATTERY_VOLTAGE = 2.0;
+// 電池の電圧を読み取る間隔 (1min)
+constexpr uint32_t READ_BATTERY_VOLTAGE_INTERVAL_MS = (1000 * 60);
+// アドバタイジング時に点滅させるLEDのピン番号
+#define ADV_LED_PIN 14
+
+BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_KEYBOARD);
+BlinkLed AdvLed(ADV_LED_PIN);
 
 void cannot_connect_callback()
 {
@@ -43,16 +55,29 @@ void matrix_scan_callback(const Set &ids)
 
 void setup()
 {
-  BleController.begin();
+  // Bluefruit
+  Bluefruit.configPrphConn(BLE_GATT_ATT_MTU_DEFAULT, BLE_GAP_EVENT_LENGTH_DEFAULT, 2, BLE_GATTC_WRITE_CMD_TX_QUEUE_SIZE_DEFAULT);
+  Bluefruit.begin(1, 0);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
-  BleController.Periph.setCannnotConnectCallback(cannot_connect_callback);
-  BleController.Periph.startConnection();
-  HidReporter *hid_reporter = BleController.Periph.getHidReporter();
+  Bluefruit.setTxPower(8);
+  Bluefruit.setName(DEVICE_NAME);
 
+  // ConnectionController
+  BLEProfile.begin();
+  AdvLed.begin();
+  Bluefruit_ConnectionController.begin();
+  Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
+  Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+  Bluefruit_ConnectionController.Periph.setCannotConnectCallback(cannot_connect_callback);
+  Bluefruit_ConnectionController.Periph.start();
+  HidReporter *hid_reporter = BLEProfile.getHidReporter();
+
+  // MatrixScan
   MatrixScan.setCallback(matrix_scan_callback);
   MatrixScan.setMatrix(matrix, out_pins, in_pins);
   MatrixScan.start();
 
+  // HidEngine
   HidEngine.setKeymap(keymap);
   HidEngine.setHidReporter(hid_reporter);
   HidEngine.start();
@@ -74,6 +99,6 @@ uint8_t readBatteryLevel()
 
 void loop()
 {
-  BleController.Periph.setBatteryLevel(readBatteryLevel());
+  BLEProfile.Bas.notify(readBatteryLevel());
   delay(READ_BATTERY_VOLTAGE_INTERVAL_MS);
 }

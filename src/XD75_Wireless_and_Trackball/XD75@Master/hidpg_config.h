@@ -12,7 +12,16 @@
 
 // 割り込みにSense signalを使用するか
 // nRF52でのみ使用可能
-#define MATRIX_SCAN_USE_SENSE_INTERRUPT true
+#define MATRIX_SCAN_USE_NRF52_SENSE_INTERRUPT true
+
+// スレーブ側のアドレスのリスト、このリストでフィルタして他の機器と接続しないようにする
+#define BLE_SLAVE_ADDR_LIST {                 \
+    {0x36, 0x9E, 0x59, 0xB6, 0xF4, 0xE0}, \
+}
+
+// スレーブがある場合のみ使用される
+// スキャン時に点滅させるLEDのピン番号
+#define BLE_SCAN_LED_PIN PIN_LED1
 
 // 電池の最大電圧
 #define MAX_BATTERY_VOLTAGE 3.0

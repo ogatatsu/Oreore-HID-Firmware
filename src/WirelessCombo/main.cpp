@@ -8,16 +8,36 @@
 
 using namespace hidpg;
 
-constexpr const char *DEVICE_NAME = "TrackPoint Keyboard II Custom";
+constexpr const char *DEVICE_NAME = "WirelessCombo";
 
+BLECentralProfileLift Lift;
 BLECentralProfileTrackpointKeyboard2 TrackPointKeyboard2;
 BlinkLed ScanLed(PIN_LED1, LOW);
 SemaphoreHandle_t callback_mutex;
-int16_t delta_x_sum = 0;
-int16_t delta_y_sum = 0;
-int16_t wheel_sum = 0;
-bool is_mouse_move_called = false;
-bool is_rotate_encoder_called = false;
+
+struct
+{
+  int16_t delta_x_sum = 0;
+  int16_t delta_y_sum = 0;
+  bool is_move_pointer_called = false;
+
+  int16_t wheel_sum = 0;
+  bool is_rotate_encoder_called = false;
+} TrackPointData;
+
+struct
+{
+  int16_t delta_x_sum = 0;
+  int16_t delta_y_sum = 0;
+  bool is_move_pointer_called = false;
+
+  int16_t wheel_sum = 0;
+  bool is_wheel_rotate_encoder_called = false;
+
+  int16_t pan_sum = 0;
+  bool is_pan_rotate_encoder_called = false;
+} LiftData;
+
 Set key6_ids, other_ids;
 
 //------------------------------------------------------------------+
@@ -75,12 +95,12 @@ void trackpoint_report_callback(uint8_t buttons, int8_t x, int8_t y, int8_t whee
   // mouse move
   if (x != 0 || y != 0)
   {
-    delta_x_sum += x;
-    delta_y_sum += y;
-    if (is_mouse_move_called == false)
+    TrackPointData.delta_x_sum += x;
+    TrackPointData.delta_y_sum += y;
+    if (TrackPointData.is_move_pointer_called == false)
     {
       HidEngine.movePointer(PdTrackpoint);
-      is_mouse_move_called = true;
+      TrackPointData.is_move_pointer_called = true;
     }
   }
 
@@ -89,11 +109,11 @@ void trackpoint_report_callback(uint8_t buttons, int8_t x, int8_t y, int8_t whee
   {
     EncoderAnd_A_IfNotRunning_B::notifyScroll();
 
-    wheel_sum += wheel;
-    if (is_rotate_encoder_called == false)
+    TrackPointData.wheel_sum += wheel;
+    if (TrackPointData.is_rotate_encoder_called == false)
     {
       HidEngine.rotateEncoder(EncTrackpoint);
-      is_rotate_encoder_called = true;
+      TrackPointData.is_rotate_encoder_called = true;
     }
   }
   xSemaphoreGive(callback_mutex);
@@ -129,6 +149,63 @@ void vendor_report_callback(uint16_t usage_code)
 }
 
 //------------------------------------------------------------------+
+// Lift
+//------------------------------------------------------------------+
+
+void mouse_report_callback(uint8_t buttons, int16_t x, int16_t y, int8_t wheel, int8_t pan)
+{
+  xSemaphoreTake(callback_mutex, portMAX_DELAY);
+  // mouse buttons
+  bool is_update = false;
+  is_update |= other_ids.update(231, bitRead(buttons, 0)); // left button
+  is_update |= other_ids.update(232, bitRead(buttons, 1)); // right button
+  is_update |= other_ids.update(233, bitRead(buttons, 2)); // middle button
+  is_update |= other_ids.update(234, bitRead(buttons, 3)); // middle button
+  is_update |= other_ids.update(235, bitRead(buttons, 4)); // middle button
+  // マウスを動かすたびにapplyToKeymapを呼び出すのを防ぐ
+  if (is_update)
+  {
+    HidEngine.applyToKeymap(key6_ids | other_ids);
+  }
+
+  // mouse move
+  if (x != 0 || y != 0)
+  {
+    LiftData.delta_x_sum += x;
+    LiftData.delta_y_sum += y;
+    if (LiftData.is_move_pointer_called == false)
+    {
+      HidEngine.movePointer(PdLift);
+      LiftData.is_move_pointer_called = true;
+    }
+  }
+
+  // wheel
+  if (wheel != 0)
+  {
+    LiftData.wheel_sum += wheel;
+    if (LiftData.is_wheel_rotate_encoder_called == false)
+    {
+      HidEngine.rotateEncoder(EncLiftWheel);
+      LiftData.is_wheel_rotate_encoder_called = true;
+    }
+  }
+
+  // pan
+  if (pan != 0)
+  {
+    LiftData.pan_sum += pan;
+    if (LiftData.is_pan_rotate_encoder_called == false)
+    {
+      HidEngine.rotateEncoder(EncLiftPan);
+      LiftData.is_pan_rotate_encoder_called = true;
+    }
+  }
+
+  xSemaphoreGive(callback_mutex);
+}
+
+//------------------------------------------------------------------+
 // Dongle
 //------------------------------------------------------------------+
 
@@ -152,10 +229,17 @@ void read_pointer_delta_callback(PointingDeviceId pointing_device_id, int16_t &d
   xSemaphoreTake(callback_mutex, portMAX_DELAY);
   if (pointing_device_id == PdTrackpoint)
   {
-    delta_x = round(delta_x_sum * TrackpointSpeedMagnification);
-    delta_y = round(delta_y_sum * TrackpointSpeedMagnification);
-    delta_x_sum = delta_y_sum = 0;
-    is_mouse_move_called = false;
+    delta_x = round(TrackPointData.delta_x_sum * TrackpointSpeedMagnification);
+    delta_y = round(TrackPointData.delta_y_sum * TrackpointSpeedMagnification);
+    TrackPointData.delta_x_sum = TrackPointData.delta_y_sum = 0;
+    TrackPointData.is_move_pointer_called = false;
+  }
+  else if (pointing_device_id == PdLift)
+  {
+    delta_x = LiftData.delta_x_sum;
+    delta_y = LiftData.delta_y_sum;
+    LiftData.delta_x_sum = LiftData.delta_y_sum = 0;
+    LiftData.is_move_pointer_called = false;
   }
   xSemaphoreGive(callback_mutex);
 }
@@ -165,9 +249,21 @@ void read_encoder_step_callback(EncoderId encoder_id, int16_t &step)
   xSemaphoreTake(callback_mutex, portMAX_DELAY);
   if (encoder_id == EncTrackpoint)
   {
-    step = wheel_sum;
-    wheel_sum = 0;
-    is_rotate_encoder_called = false;
+    step = TrackPointData.wheel_sum;
+    TrackPointData.wheel_sum = 0;
+    TrackPointData.is_rotate_encoder_called = false;
+  }
+  else if (encoder_id == EncLiftWheel)
+  {
+    step = LiftData.wheel_sum;
+    LiftData.wheel_sum = 0;
+    LiftData.is_wheel_rotate_encoder_called = false;
+  }
+  else if (encoder_id == EncLiftPan)
+  {
+    step = LiftData.pan_sum;
+    LiftData.pan_sum = 0;
+    LiftData.is_pan_rotate_encoder_called = false;
   }
   xSemaphoreGive(callback_mutex);
 }
@@ -212,10 +308,14 @@ void setup()
 
   EncoderAnd_A_IfNotRunning_B::begin();
 
-  // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
-  Bluefruit.begin(0, 1);
+  // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 2
+  Bluefruit.begin(0, 2);
   Bluefruit.setTxPower(8);
   Bluefruit.setName(DEVICE_NAME);
+
+  // Lift Host
+  Lift.begin();
+  Lift.Hid.setMouseReportCallback(mouse_report_callback);
 
   // TrackPoint Keyboard II Host
   TrackPointKeyboard2.begin();
@@ -227,7 +327,7 @@ void setup()
   // ConnectionController
   ScanLed.begin();
   Bluefruit_ConnectionController.begin();
-  Bluefruit_ConnectionController.Central.setProfile(&TrackPointKeyboard2);
+  Bluefruit_ConnectionController.Central.setProfile(&Lift, &TrackPointKeyboard2);
   Bluefruit_ConnectionController.Central.setScanLed(&ScanLed);
   Bluefruit_ConnectionController.Central.start();
 
