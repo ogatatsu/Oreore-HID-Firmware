@@ -33,10 +33,16 @@ constexpr EncoderShiftId EncShiftVolume{1};
 constexpr EncoderShiftId EncShiftTaskSwitch{2};
 constexpr EncoderShiftId EncShiftTabSwitch{3};
 
+<<<<<<< HEAD
 constexpr double TrackpointSpeedMagnification = 2.4;
 
 // トラックポイントの速度を変更してもジェスチャーの使用感は変更しない
 constexpr uint16_t TrackpointGestureDistance = round(15 * TrackpointSpeedMagnification);
+=======
+constexpr double TrackpointSpeedMagnification = 2.5;
+
+constexpr uint16_t GestureDistance = round(15 * TrackpointSpeedMagnification);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
 
 //------------------------------------------------------------------+
 // CustomCommand
@@ -111,13 +117,21 @@ bool EncoderAnd_A_IfNotRunning_B::_scrolled = false;
 SemaphoreHandle_t EncoderAnd_A_IfNotRunning_B::_mutex = nullptr;
 StaticSemaphore_t EncoderAnd_A_IfNotRunning_B::_mutex_buffer;
 
+<<<<<<< HEAD
 class RightButtonOrEncoderShift
+=======
+class RightButtonOrEncorderShift
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
     : public Command,
       public BeforeMovePointerEventListener,
       public BeforeRotateEncoderEventListener
 {
 public:
+<<<<<<< HEAD
   RightButtonOrEncoderShift(EncoderShiftId encoder_shift_id)
+=======
+  RightButtonOrEncorderShift(EncoderShiftId encoder_shift_id)
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
       : BeforeMovePointerEventListener(),
         BeforeRotateEncoderEventListener(),
         _encoder_shift_id(encoder_shift_id.value)
@@ -326,7 +340,11 @@ Key keymap[] = {
     // Lift
 
     {231 /* LeftButton         */, MS_CLK(LeftButton)},
+<<<<<<< HEAD
     {232 /* RightButton        */, new RightButtonOrEncoderShift(EncShiftTabSwitch)},
+=======
+    {232 /* RightButton        */, new RightButtonOrEncorderShift(EncShiftTabSwitch)},
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
     {233 /* MiddleButton       */, MS_CLK(MiddleButton)},
     {234 /* BackwardButton     */, MS_CLK(BackwardButton)},
     {235 /* ForwardButton      */, MS_CLK(ForwardButton)},
@@ -334,7 +352,11 @@ Key keymap[] = {
     // Relacon
 
     {241 /* LeftButton         */, MS_CLK(LeftButton)},
+<<<<<<< HEAD
     {242 /* RightButton        */, new RightButtonOrEncoderShift(EncShiftTabSwitch)},
+=======
+    {242 /* RightButton        */, new RightButtonOrEncorderShift(EncShiftTabSwitch)},
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
     {243 /* MiddleButton       */, MS_CLK(MiddleButton)},
     {244 /* ForwardButton      */, HT(SFT(KeyShiftRelaconTaskSwitch), MS_CLK(BackwardButton))},
     {245 /* ForwardButton      */, HT(SFT(KeyShiftRelaconTaskSwitch), MS_CLK(ForwardButton))},
@@ -449,10 +471,17 @@ Gesture gestureMap[] = {
     //   up_command, down_command, left_command, right_command,
     //   [PreCommand{ command, timing }] }
 
+<<<<<<< HEAD
     {GstTabSwitch, PdTrackpoint, TrackpointGestureDistance, AngleSnap::Enable,
      _______, _______, STEP_SPD(KC(Ctrl + Shift + Tab), 250), STEP_SPD(KC(Ctrl + Tab), 250)},
 
     {GstArrow, PdTrackpoint, TrackpointGestureDistance, AngleSnap::Enable,
+=======
+    {GstTabSwitch, PdTrackpoint, GestureDistance, AngleSnap::Enable,
+     _______, _______, STEP_SPD(KC(Ctrl + Shift + Tab), 250), STEP_SPD(KC(Ctrl + Tab), 250)},
+
+    {GstArrow, PdTrackpoint, GestureDistance, AngleSnap::Enable,
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
      STEP_SPD(KC(Up), 250), STEP_SPD(KC(Down), 250), STEP_SPD(KC(Left), 250), STEP_SPD(KC(Right), 250)},
 
     {GstMiddleButton, PdLift, 1, AngleSnap::Disable,
@@ -461,7 +490,11 @@ Gesture gestureMap[] = {
 };
 
 Encoder encoderMap[] = {
+<<<<<<< HEAD
     // { encoder_id, step
+=======
+    // { encoder_id,
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
     //   counterclockwise_command, clockwise_command }
 
     {EncTrackpoint, 1,
@@ -478,7 +511,11 @@ Encoder encoderMap[] = {
 };
 
 EncoderShift encoderShiftMap[] = {
+<<<<<<< HEAD
     // { encoder_shift_id, encoder_id, step
+=======
+    // { encoder_shift_id, encoder_id,
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
     //   counterclockwise_command, clockwise_command,
     //   [PreCommand{ command, timing }] }
 

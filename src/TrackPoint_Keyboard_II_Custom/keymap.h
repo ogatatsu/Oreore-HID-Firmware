@@ -22,10 +22,16 @@ constexpr GestureId GstArrow{1};
 
 constexpr EncoderShiftId EncShiftPan{0};
 
+<<<<<<< HEAD
 constexpr double TrackpointSpeedMagnification = 2.4;
 
 // トラックポイントの速度を変更してもジェスチャーの使用感は変更しない
 constexpr uint16_t TrackpointGestureDistance = round(15 * TrackpointSpeedMagnification);
+=======
+constexpr double TrackpointSpeedMagnification = 2.5;
+
+constexpr uint16_t GestureDistance = round(15 * TrackpointSpeedMagnification);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
 
 //------------------------------------------------------------------+
 // CustomCommand
@@ -320,10 +326,17 @@ Gesture gestureMap[] = {
     //   up_command, down_command, left_command, right_command,
     //   [PreCommand{ command, timing }] }
 
+<<<<<<< HEAD
     {GstTabSwitch, PdTrackpoint, TrackpointGestureDistance, AngleSnap::Enable,
      _______, _______, STEP_SPD(KC(Ctrl + Shift + Tab), 250), STEP_SPD(KC(Ctrl + Tab), 250)},
 
     {GstArrow, PdTrackpoint, TrackpointGestureDistance, AngleSnap::Enable,
+=======
+    {GstTabSwitch, PdTrackpoint, GestureDistance, AngleSnap::Enable,
+     _______, _______, STEP_SPD(KC(Ctrl + Shift + Tab), 250), STEP_SPD(KC(Ctrl + Tab), 250)},
+
+    {GstArrow, PdTrackpoint, GestureDistance, AngleSnap::Enable,
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
      STEP_SPD(KC(Up), 250), STEP_SPD(KC(Down), 250), STEP_SPD(KC(Left), 250), STEP_SPD(KC(Right), 250)},
 };
 

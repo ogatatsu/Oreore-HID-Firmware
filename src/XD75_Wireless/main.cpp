@@ -22,12 +22,18 @@
   THE SOFTWARE.
 */
 
+<<<<<<< HEAD
+=======
+#include "config.h"
+
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
 #include "Bluefruit_ConnectionController.h"
 #include "keymap.h"
 #include "matrix.h"
 
 using namespace hidpg;
 
+<<<<<<< HEAD
 // デバイス名
 constexpr const char *DEVICE_NAME = "owl8";
 // 電池の最大電圧
@@ -41,6 +47,10 @@ constexpr uint32_t READ_BATTERY_VOLTAGE_INTERVAL_MS = (1000 * 60);
 
 BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_KEYBOARD);
 BlinkLed AdvLed(ADV_LED_PIN);
+=======
+BLEPeripheralProfileHid BLEProfile(BLE_APPEARANCE_HID_KEYBOARD);
+BlinkLed AdvLed(BLE_ADV_LED_PIN);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
 
 void cannot_connect_callback()
 {
@@ -60,7 +70,11 @@ void setup()
   Bluefruit.begin(1, 0);
   sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
   Bluefruit.setTxPower(8);
+<<<<<<< HEAD
   Bluefruit.setName(DEVICE_NAME);
+=======
+  Bluefruit.setName(BLE_DEVICE_NAME);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
 
   // ConnectionController
   BLEProfile.begin();
@@ -68,7 +82,11 @@ void setup()
   Bluefruit_ConnectionController.begin();
   Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
   Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+<<<<<<< HEAD
   Bluefruit_ConnectionController.Periph.setCannotConnectCallback(cannot_connect_callback);
+=======
+  Bluefruit_ConnectionController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
   Bluefruit_ConnectionController.Periph.start();
   HidReporter *hid_reporter = BLEProfile.getHidReporter();
 

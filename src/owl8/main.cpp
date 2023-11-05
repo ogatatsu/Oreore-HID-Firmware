@@ -165,7 +165,11 @@ void setup()
   Bluefruit_ConnectionController.begin();
   Bluefruit_ConnectionController.Periph.setProfile(&BLEProfile);
   Bluefruit_ConnectionController.Periph.setAdvLed(&AdvLed);
+<<<<<<< HEAD
   Bluefruit_ConnectionController.Periph.setCannotConnectCallback(cannot_connect_callback);
+=======
+  Bluefruit_ConnectionController.Periph.setCannnotConnectCallback(cannot_connect_callback);
+>>>>>>> 5177ef91c514989a45e6342f9e170515e3b67f34
   Bluefruit_ConnectionController.Periph.start();
   HidReporter *hid_reporter = BLEProfile.getHidReporter();
 
